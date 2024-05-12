@@ -10,21 +10,21 @@
 <body>
     <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-dark">
         <div class="container">
-            
-        @Html.ActionLink("Home", "Index", "Home", new { area = "" }, new { @class = "navbar-brand" })
-         <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" title="Toggle navigation" aria-controls="navbarSupportedContent"
-                 aria-expanded="false" aria-label="Toggle navigation">
-             <span class="navbar-toggler-icon"></span>
-         </button>
-            
-        <div class="collapse navbar-collapse justify-content-start">
-            <ul class="navbar-nav flex-grow-0">
-                <li>@Html.ActionLink("Login or Register", "Login", "Account", new { area = "" }, new { @class = "nav-link" })</li>
-                @*@Html.ActionLink("Signup", "", "Signup", new { area = "" }, new { @class = "nav-link" })</li>*@
-                <li>
-            </ul>
-        </div>
-            
+
+            @Html.ActionLink("Home", "Index", "Home", new { area = "" }, new { @class = "navbar-brand" })
+            <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" title="Toggle navigation" aria-controls="navbarSupportedContent"
+                    aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse justify-content-start">
+                <ul class="navbar-nav flex-grow-0">
+                    <li>@Html.ActionLink("Login", "Login", "Account", new { area = "" }, new { @class = "nav-link" })</li>
+                    @*@Html.ActionLink("Signup", "", "Signup", new { area = "" }, new { @class = "nav-link" })</li>*@
+                    <li>
+                </ul>
+            </div>
+
             <div class="collapse navbar-collapse justify-content-end">
                 <ul class="navbar-nav flex-grow-0">
                     <li>@Html.ActionLink("About", "About", "Home", new { area = "" }, new { @class = "nav-link" })</li>
