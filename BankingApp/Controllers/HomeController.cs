@@ -15,7 +15,7 @@ namespace BankingApp.Controllers
 
         public ActionResult About()
         {
-            ViewBag.Message = "Contact and information page.";
+            ViewBag.Message = "Contact and information home page.";
 
             return View();
         }

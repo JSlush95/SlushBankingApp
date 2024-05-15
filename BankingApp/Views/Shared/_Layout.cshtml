@@ -19,17 +19,15 @@
             
         <div class="collapse navbar-collapse justify-content-start">
             <ul class="navbar-nav flex-grow-0">
-                <li>@Html.ActionLink("Login or Register", "Login", "Account", new { area = "" }, new { @class = "nav-link" })</li>
+                <li>@Html.ActionLink("About", "About", "Home", new { area = "" }, new { @class = "nav-link" })</li>
                 @*@Html.ActionLink("Signup", "", "Signup", new { area = "" }, new { @class = "nav-link" })</li>*@
                 <li>
             </ul>
         </div>
             
-            <div class="collapse navbar-collapse justify-content-end">
-                <ul class="navbar-nav flex-grow-0">
-                    <li>@Html.ActionLink("About", "About", "Home", new { area = "" }, new { @class = "nav-link" })</li>
-                </ul>
-            </div>
+        <div class="collapse navbar-collapse justify-content-end">
+            @Html.Partial("_LoginPartial")
+        </div>
         </div>
     </nav>
     <div class="container body-content">
