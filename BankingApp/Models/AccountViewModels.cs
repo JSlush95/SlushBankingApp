@@ -49,8 +49,7 @@ namespace BankingApp.Models
     public class LoginViewModel
     {
         [Required]
-        [Display(Name = "Email")]
-        [EmailAddress]
+        [Display(Name = "Username")]
         public string Email { get; set; }
 
         [Required]
@@ -65,7 +64,12 @@ namespace BankingApp.Models
     public class RegisterViewModel
     {
         [Required]
-        [EmailAddress]
+        [StringLength(100, ErrorMessage = "The {0} must be at least {2} characters long.", MinimumLength = 6)]
+        [Display(Name = "Username")]
+        public string Username { get; set; }
+
+        [Required]
+        [EmailAddress(ErrorMessage = "The {0} field is not a valid email address.")]
         [Display(Name = "Email")]
         public string Email { get; set; }
 
