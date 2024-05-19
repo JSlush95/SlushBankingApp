@@ -1,0 +1,20 @@
+﻿
+@model BankingApp.Models.CreateAccountViewModel
+@using (Html.BeginForm("CreateAccount", "Manage", FormMethod.Post))
+{
+    @Html.AntiForgeryToken()
+    @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+    <div class="form-group">
+        @Html.LabelFor(m => m.AccountType, new { @class = "col-md-2 col-form-label" })
+        @Html.EnumDropDownListFor(m => m.AccountType, "Select Type", new { @class = "form-control" })
+        @Html.ValidationMessageFor(m => m.AccountType, "", new { @class = "text-danger" })
+    </div>
+    <br />
+    <div class="form-group">
+        @Html.LabelFor(m => m.Balance, new { @class = "col-md-2 col-form-label" })
+        @Html.TextBoxFor(m => m.Balance, new { @class = "form-control" })
+        @Html.ValidationMessageFor(m => m.Balance, "", new { @class = "text-danger" })
+    </div>
+    <br />
+    <button type="submit" class="btn btn-primary">Create Account</button>
+}

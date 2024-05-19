@@ -1,0 +1,21 @@
+﻿@model List<BankingApp.Models.BankAccount>
+<table class="table table-striped table-hover">
+    <thead>
+        <tr>
+            <th scope="col">Account ID</th>
+            <th scope="col">Account Type</th>
+            <th scope="col">Account Balance</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <th>scope="row"</th>
+                <td>@item.AccountID</td>
+                <td>@item.AccountType</td>
+                <td>@item.Balance</td>
+            </tr>
+        }
+    </tbody>
+</table>

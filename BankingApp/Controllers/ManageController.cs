@@ -7,6 +7,7 @@ using Microsoft.AspNet.Identity;
 using Microsoft.AspNet.Identity.Owin;
 using Microsoft.Owin.Security;
 using BankingApp.Models;
+using System.Data.Entity;
 
 namespace BankingApp.Controllers
 {
@@ -15,15 +16,45 @@ namespace BankingApp.Controllers
     {
         private ApplicationSignInManager _signInManager;
         private ApplicationUserManager _userManager;
+        private ApplicationDbContext _context;
 
         public ManageController()
+            : this(new ApplicationDbContext(), null, null)
         {
+        }
+
+        public ManageController(ApplicationDbContext context, ApplicationUserManager userManager, ApplicationSignInManager signInManager)
+        {
+            ContextDbManager = context;
+            UserManager = userManager;
+            SignInManager = signInManager;
+        }
+
+        /*public ManageController(): this(new ApplicationDbContext())
+        {
+        }
+
+        public ManageController(ApplicationDbContext context)
+        {
+            _context = context;
         }
 
         public ManageController(ApplicationUserManager userManager, ApplicationSignInManager signInManager)
         {
             UserManager = userManager;
             SignInManager = signInManager;
+        }*/
+
+        public ApplicationDbContext ContextDbManager
+        {
+            get
+            {
+                return _context ?? HttpContext.GetOwinContext().Get<ApplicationDbContext>();
+            }
+            private set
+            {
+                _context = value;
+            }
         }
 
         public ApplicationSignInManager SignInManager
@@ -97,6 +128,138 @@ namespace BankingApp.Controllers
                 message = ManageMessageId.Error;
             }
             return RedirectToAction("ManageLogins", new { Message = message });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> CreateAccount(CreateAccountViewModel model)
+        {
+            var userId = User.Identity.GetUserId<int>();
+            var indexModel = new IndexViewModel
+            {
+                HasPassword = HasPassword(),
+                PhoneNumber = await UserManager.GetPhoneNumberAsync(userId),
+                TwoFactor = await UserManager.GetTwoFactorEnabledAsync(userId),
+                Logins = await UserManager.GetLoginsAsync(userId),
+                BrowserRemembered = await AuthenticationManager.TwoFactorBrowserRememberedAsync(User.Identity.GetUserId())
+            };
+
+            if (!ModelState.IsValid)
+            {
+                return View("Index", indexModel);
+            }
+
+            // Utilizing LINQ to query the last time this element was last created, as the anchor to prevent spam.
+            var lastAccountCreationTimestamp = await _context.BankAccounts
+                .Where(a => a.Holder == userId)
+                .OrderByDescending(a => a.DateOpened)
+                .Select(a => a.DateOpened)
+                .FirstOrDefaultAsync();
+
+            var newAccount = new BankAccount
+            {
+                Balance = model.Balance,
+                Holder = userId,
+                DateOpened = DateTime.Now,
+                AccountType = model.AccountType
+            };
+
+            var cooldownPeriod = TimeSpan.FromMinutes(30);  // The cooldown period in minutes.
+
+            // Creating a cooldown timer to prevent creation abuse.
+            if (lastAccountCreationTimestamp != default && DateTime.Now - lastAccountCreationTimestamp < cooldownPeriod)
+            {
+                var timeElapsed = DateTime.Now - lastAccountCreationTimestamp;
+                var timeRemaining = cooldownPeriod - timeElapsed;
+
+                if (timeRemaining > TimeSpan.Zero)
+                {
+                    ModelState.AddModelError("CooldownTimerError", $"Please wait {timeRemaining} before creating a new account.");
+                    return View("Index", indexModel);
+                }
+            }
+
+            _context.BankAccounts.Add(newAccount);
+            await _context.SaveChangesAsync();
+
+            return View("Index", indexModel);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> CreateCard(CreateCardViewModel model)
+        {
+            var userId = User.Identity.GetUserId<int>();
+            var indexModel = new IndexViewModel
+            {
+                HasPassword = HasPassword(),
+                PhoneNumber = await UserManager.GetPhoneNumberAsync(userId),
+                TwoFactor = await UserManager.GetTwoFactorEnabledAsync(userId),
+                Logins = await UserManager.GetLoginsAsync(userId),
+                BrowserRemembered = await AuthenticationManager.TwoFactorBrowserRememberedAsync(User.Identity.GetUserId())
+            };
+
+            if (!ModelState.IsValid)
+            {
+                return View("Index", indexModel);
+            }
+
+            // Utilizing LINQ to query the last time this element was last created, as the anchor to prevent spam.
+            var lastCardCreationTimestamp = await _context.Cards
+                .Where(a => a.AssociatedAccount == userId)
+                .OrderByDescending(a => a.IssueDate)
+                .Select(a => a.IssueDate)
+                .FirstOrDefaultAsync();
+            var cooldownPeriod = TimeSpan.FromMinutes(30);  // The cooldown period in minutes.
+
+            // Creating a cooldown timer to prevent creation abuse.
+            if (lastCardCreationTimestamp != default && DateTime.Now - lastCardCreationTimestamp < cooldownPeriod)
+            {
+                var timeElapsed = DateTime.Now - lastCardCreationTimestamp;
+                var timeRemaining = cooldownPeriod - timeElapsed;
+
+                if (timeRemaining > TimeSpan.Zero)
+                {
+                    ModelState.AddModelError("CooldownTimerError", $"Please wait {timeRemaining} seconds.");
+                    return View("Index", indexModel);
+                }
+            }
+
+            string generatedCardNumber;
+            bool isUnique;
+            string getUniqueString(int stringLength)
+            {
+                using (var rng = new System.Security.Cryptography.RNGCryptoServiceProvider())
+                {
+                    var bit_count = (stringLength * 6);
+                    var byte_count = ((bit_count + 7) / 8); // Round up
+                    var bytes = new byte[byte_count];
+                    rng.GetBytes(bytes);
+                    var base64String = Convert.ToBase64String(bytes);
+                    return base64String.Substring(0, stringLength);
+                }
+            }
+
+            // Checking whether this card number exists in the database, because it would break the system, since cards cannot share their unique usage code.
+            do
+            {
+                generatedCardNumber = getUniqueString(11);  // Length - 1
+                isUnique = !_context.Cards.Any(c => c.CardNumber == generatedCardNumber);
+            }while(!isUnique && generatedCardNumber.Length != 11);
+
+            var newCard = new Card
+            {
+                CardType = model.CardType,
+                CardNumber = generatedCardNumber,
+                AssociatedAccount = userId,
+                IssueDate = DateTime.Now,
+                Active = true
+            };
+
+            _context.Cards.Add(newCard);
+            await _context.SaveChangesAsync();
+
+            return View("Index", indexModel);
         }
 
         //

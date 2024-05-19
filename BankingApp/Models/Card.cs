@@ -30,7 +30,7 @@ namespace BankingApp.Models
 
     public enum CardType
     {
-        credit,
-        debit
+        Credit,
+        Debit
     }
 }

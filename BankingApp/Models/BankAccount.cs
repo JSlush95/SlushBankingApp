@@ -26,7 +26,7 @@ namespace BankingApp.Models
     }
 
     public enum AccountType{
-        checking,
-        savings
+        Checking,
+        Savings
     }
 }

@@ -20,6 +20,8 @@ namespace BankingApp.Models
         public decimal Amount { get; set; }
         [Required]
         public DateTime TimeExecuted { get; set; }
+        [Required]
+        public bool Pending { get; set; }
         // Navigation fields for the foreign key "Sender" and "Recipient" relationships for BankAccount's AccountID key.
         [ForeignKey("Sender")]
         public virtual BankAccount SenderAccount { get; set; }

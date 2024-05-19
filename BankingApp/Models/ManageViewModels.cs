@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Data.Entity;
 using Microsoft.AspNet.Identity;
 using Microsoft.Owin.Security;
 
@@ -82,5 +84,47 @@ namespace BankingApp.Models
     {
         public string SelectedProvider { get; set; }
         public ICollection<System.Web.Mvc.SelectListItem> Providers { get; set; }
+    }
+
+    /*public class ViewAccounts
+    {
+        private DbSet<Card> Cards = new DbSet<Card> { new Card() };
+        private DbSet<TransactionRecord> TransactionRecords = new DbSet<TransactionRecord> { new TransactionRecord() };
+        
+    }*/
+
+    public class CreateAccountViewModel
+    {
+        [Required]
+        [Display(Name = "Account Type")]
+        public AccountType AccountType { get; set; }
+
+        [Required]
+        [Display(Name = "Balance")]
+        [Range(0, Double.MaxValue, ErrorMessage = "Please enter a valid balance")]
+        public decimal Balance { get; set; }
+    }
+
+    public class CreateCardViewModel
+    {
+        /*[Required]
+        [Display(Name = "Card Number")]
+        public string CardNumber { get; set; }*/
+
+        [Required]
+        [Display(Name = "Card Type")]
+        public CardType CardType { get; set; }
+    }
+
+    public class TransferFundsViewModel
+    {
+        [Required]
+        [Display(Name = "Sender")]
+        [Range(0, Double.MaxValue, ErrorMessage = "Please enter a valid balance")]
+        public decimal SenderAmount { get; set; }
+        [Required]
+        [Display(Name = "Recipient")]
+        [Range(0, Double.MaxValue, ErrorMessage = "Please enter a valid balance")]
+        public decimal RecipientAmount { get; set; }
     }
 }

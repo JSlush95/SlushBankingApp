@@ -30,7 +30,12 @@ namespace BankingApp.Models
             return userIdentity;
         }
     }
-
+    
+     /* 
+      * Defining the default classes for the various implementations of the ASP.NET Entity Framework, the purpose is to use an 'int' typed Id field for the key.
+      * Chose this location, as it relates to the User class the most, didn't justify standalone class files for each, as the code is very barebones.
+      * To customize the default implementation, relocate each of these classes to standalone classes for readability, then use the default template code and alter as needed.
+     */ 
     public class CustomUserRole : IdentityUserRole<int> { }
     public class CustomUserClaim : IdentityUserClaim<int> { }
     public class CustomUserLogin : IdentityUserLogin<int> { }

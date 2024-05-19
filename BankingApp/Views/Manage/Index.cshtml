@@ -4,11 +4,10 @@
 }
 
 <main aria-labelledby="title">
-    <h2 id="title">@ViewBag.Title.</h2>
 
     <p class="text-success">@ViewBag.StatusMessage</p>
     <div>
-        <h4>Change your account settings</h4>
+        <h3>General Account Settings</h3>
         <hr />
         <dl class="dl-horizontal">
             <dt>Password:</dt>
@@ -31,13 +30,13 @@
             </dd>
             @*
                 Phone Numbers can used as a second factor of verification in a two-factor authentication system.
-                
+
                 See <a href="https://go.microsoft.com/fwlink/?LinkId=403804">this article</a>
                     for details on setting up this ASP.NET application to support two-factor authentication using SMS.
-                
+
                 Uncomment the following block after you have set up two-factor authentication
             *@
-            @*  
+            @*
                 <dt>Phone Number:</dt>
                 <dd>
                     @(Model.PhoneNumber ?? "None")
@@ -86,4 +85,49 @@
             </dd>
         </dl>
     </div>
+    <br />
+    <h3>Bank Account Settings</h3>
+    <hr />
+    <div class="container mt-3">
+        <!-- Nav tabs -->
+        <ul class="nav nav-tabs mb-auto" id="nav-tab" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" id="nav-tab-view-accounts" data-bs-toggle="tab" href="#view-accounts" role="tab" aria-controls="view-accounts" aria-selected="true">Current Bank Accounts</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="nav-tab-create-account" data-bs-toggle="tab" href="#create-account" role="tab" aria-controls="create-account" aria-selected="false">Create Bank Account</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="nav-tab-create-card" data-bs-toggle="tab" href="#create-card" role="tab" aria-controls="create-card" aria-selected="false">Create Card</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="nav-tab-transfer" data-bs-toggle="tab" href="#transfer" role="tab" aria-controls="transfer" aria-selected="false">Transfer Funds</a>
+            </li>
+        </ul>
+
+        <!-- Tab panes -->
+        <div class="tab-content" id="nav-tabContent">
+            <div class="tab-pane fade show active" id="view-accounts" role="tabpanel" aria-labelledby="nav-tab-view-accounts">
+                <div id="view-accounts-content">
+                    @Html.Partial("_ViewAccountsPartial", new List<BankingApp.Models.BankAccount>())
+                </div>
+            </div>
+            <div class="tab-pane fade" id="create-account" role="tabpanel" aria-labelledby="nav-tab-create-account">
+                <div id="create-account-content">
+                    @Html.Partial("_CreateAccountPartial", new BankingApp.Models.CreateAccountViewModel())
+                </div>
+            </div>
+            <div class="tab-pane fade" id="create-card" role="tabpanel" aria-labelledby="nav-tab-create-card">
+                <div id="create-card-content">
+                    @Html.Partial("_CreateCardPartial", new BankingApp.Models.CreateCardViewModel())
+                </div>
+            </div>
+            <div class="tab-pane fade" id="create-card" role="tabpanel" aria-labelledby="nav-tab-transfer">
+                <div id="create-card-content">
+                    @Html.Partial("_TransferPartial")
+                </div>
+            </div>
+        </div>
+    </div>
+    <br />
 </main>
