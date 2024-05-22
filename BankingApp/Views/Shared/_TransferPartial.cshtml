@@ -1,1 +1,38 @@
-﻿
+﻿@model BankingApp.Models.TransferFundsViewModel
+<div>
+    <h3>Transfer Funds</h3>
+    @using (Html.BeginForm("TransferFunds", "Manage", FormMethod.Post))
+    {
+        @Html.AntiForgeryToken()
+
+        <div class="form-group">
+            @Html.LabelFor(model => model.SourceAccountId, "Source Account", htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.DropDownListFor(model => model.SourceAccountId, Model.SourceAccounts, "-- Select Source Account --", new { @class = "form-control" })
+                @Html.ValidationMessageFor(model => model.SourceAccountId, "", new { @class = "text-danger" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model.DestinationAccountId, "Destination Account", htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.DropDownListFor(model => model.DestinationAccountId, Model.DestinationAccounts, "-- Select Destination Account --", new { @class = "form-control" })
+                @Html.ValidationMessageFor(model => model.DestinationAccountId, "", new { @class = "text-danger" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model.Amount, "Amount", htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.EditorFor(model => model.Amount, new { htmlAttributes = new { @class = "form-control" } })
+                @Html.ValidationMessageFor(model => model.Amount, "", new { @class = "text-danger" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-10">
+                <input type="submit" value="Transfer" class="btn btn-primary" />
+            </div>
+        </div>
+    }
+</div>

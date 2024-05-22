@@ -8,6 +8,7 @@ using Microsoft.AspNet.Identity.Owin;
 using Microsoft.Owin.Security;
 using BankingApp.Models;
 using System.Data.Entity;
+using System.Collections.Generic;
 
 namespace BankingApp.Controllers
 {
@@ -16,7 +17,7 @@ namespace BankingApp.Controllers
     {
         private ApplicationSignInManager _signInManager;
         private ApplicationUserManager _userManager;
-        private ApplicationDbContext _context;
+        private ApplicationDbContext _dbContext;
 
         public ManageController()
             : this(new ApplicationDbContext(), null, null)
@@ -49,11 +50,11 @@ namespace BankingApp.Controllers
         {
             get
             {
-                return _context ?? HttpContext.GetOwinContext().Get<ApplicationDbContext>();
+                return _dbContext ?? HttpContext.GetOwinContext().Get<ApplicationDbContext>();
             }
             private set
             {
-                _context = value;
+                _dbContext = value;
             }
         }
 
@@ -81,6 +82,11 @@ namespace BankingApp.Controllers
             }
         }
 
+        private int GetCurrentUserId()
+        {
+            return User.Identity.GetUserId<int>();
+        }
+
         //
         // GET: /Manage/Index
         public async Task<ActionResult> Index(ManageMessageId? message)
@@ -94,14 +100,53 @@ namespace BankingApp.Controllers
                 : message == ManageMessageId.RemovePhoneSuccess ? "Your phone number was removed."
                 : "";
 
-            var userId = User.Identity.GetUserId();
+            int userId = GetCurrentUserId();    // Must get the user's ID field for the LINQ functionality, as it cannot evaluate the function call directly.
+            
+            var bankAccounts = await _dbContext.BankAccounts    // Creating LINQ queries that will be provided as helper functions to the respective partial views that use their models.
+                .Where(ba => ba.Holder == userId)
+                .ToListAsync();
+            var cards = await _dbContext.Cards
+                .Where(c => c.AssociatedAccount == userId && c.AssociatedBankAccount.Holder == userId)
+                .ToListAsync();
+
+            if (TempData.ContainsKey("Message"))
+            {
+                ViewBag.Message = TempData["Message"].ToString();
+            }
+
             var model = new IndexViewModel
             {
                 HasPassword = HasPassword(),
-                PhoneNumber = await UserManager.GetPhoneNumberAsync(User.Identity.GetUserId<int>()),
-                TwoFactor = await UserManager.GetTwoFactorEnabledAsync(User.Identity.GetUserId<int>()),
-                Logins = await UserManager.GetLoginsAsync(User.Identity.GetUserId<int>()),
-                BrowserRemembered = await AuthenticationManager.TwoFactorBrowserRememberedAsync(userId)
+                PhoneNumber = await UserManager.GetPhoneNumberAsync(GetCurrentUserId()),
+                TwoFactor = await UserManager.GetTwoFactorEnabledAsync(GetCurrentUserId()),
+                Logins = await UserManager.GetLoginsAsync(GetCurrentUserId()),
+                BrowserRemembered = await AuthenticationManager.TwoFactorBrowserRememberedAsync(User.Identity.GetUserId()),
+                CreateCardViewModel = new CreateCardViewModel
+                {
+                    BankAccounts = bankAccounts.Select(ba => new SelectListItem
+                    {
+                        Value = ba.AccountID.ToString(),
+                        Text = $"Account ID: {ba.AccountID} - {ba.AccountType}"
+                    }).ToList()
+                },
+                TransferFundsViewModel = new TransferFundsViewModel
+                {
+                    SourceAccounts = bankAccounts.Select(ba => new SelectListItem
+                    {
+                        Value = ba.AccountID.ToString(),
+                        Text = $"Account ID: {ba.AccountID} - {ba.AccountType} - Balance: {ba.Balance}"
+                    }),
+                    DestinationAccounts = bankAccounts.Select(ba => new SelectListItem
+                    {
+                        Value = ba.AccountID.ToString(),
+                        Text = $"Account ID: {ba.AccountID} - {ba.AccountType} - Balance: {ba.Balance}"
+                    })
+                },
+                DisplayAccountInfoViewModel = new DisplayAccountInfoViewModel
+                {
+                    Accounts = bankAccounts,
+                    Cards = cards
+                }
             };
             return View(model);
         }
@@ -113,10 +158,10 @@ namespace BankingApp.Controllers
         public async Task<ActionResult> RemoveLogin(string loginProvider, string providerKey)
         {
             ManageMessageId? message;
-            var result = await UserManager.RemoveLoginAsync(User.Identity.GetUserId<int>(), new UserLoginInfo(loginProvider, providerKey));
+            var result = await UserManager.RemoveLoginAsync(GetCurrentUserId(), new UserLoginInfo(loginProvider, providerKey));
             if (result.Succeeded)
             {
-                var user = await UserManager.FindByIdAsync(User.Identity.GetUserId<int>());
+                var user = await UserManager.FindByIdAsync(GetCurrentUserId());
                 if (user != null)
                 {
                     await SignInManager.SignInAsync(user, isPersistent: false, rememberBrowser: false);
@@ -130,27 +175,63 @@ namespace BankingApp.Controllers
             return RedirectToAction("ManageLogins", new { Message = message });
         }
 
+        /*// GET: /Manage/DisplayAccountInfo
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> DisplayAccountInfo(DisplayAccountInfoViewModel model)
+        {
+            var indexModel = new IndexViewModel
+            {
+                HasPassword = HasPassword(),
+                PhoneNumber = await UserManager.GetPhoneNumberAsync(GetCurrentUserId()),
+                TwoFactor = await UserManager.GetTwoFactorEnabledAsync(GetCurrentUserId()),
+                Logins = await UserManager.GetLoginsAsync(GetCurrentUserId()),
+                BrowserRemembered = await AuthenticationManager.TwoFactorBrowserRememberedAsync(User.Identity.GetUserId())
+            };
+            int userId = GetCurrentUserId();
+            var bankAccounts = await _dbContext.BankAccounts
+                .Where(ba => ba.Holder == userId)
+                .ToListAsync();
+
+            var BankAccountsWithCards = new Dictionary<BankAccount, List<Card>>();
+
+            foreach (var account in bankAccounts)
+            {
+                var cards = await _dbContext.Cards
+                    .Where(c => c.AssociatedAccount == account.AccountID)
+                    .ToListAsync();
+
+                BankAccountsWithCards[account] = cards;
+            }
+
+            model.BankAccountsWithCards = BankAccountsWithCards;
+
+            return View(model);
+        }*/
+
+        // POST: /Manage/CreateAccount
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> CreateAccount(CreateAccountViewModel model)
         {
-            var userId = User.Identity.GetUserId<int>();
+            int userId = GetCurrentUserId();    // Must get the user's ID field for the LINQ functionality, as it cannot evaluate the function call directly.
             var indexModel = new IndexViewModel
             {
                 HasPassword = HasPassword(),
-                PhoneNumber = await UserManager.GetPhoneNumberAsync(userId),
-                TwoFactor = await UserManager.GetTwoFactorEnabledAsync(userId),
-                Logins = await UserManager.GetLoginsAsync(userId),
+                PhoneNumber = await UserManager.GetPhoneNumberAsync(GetCurrentUserId()),
+                TwoFactor = await UserManager.GetTwoFactorEnabledAsync(GetCurrentUserId()),
+                Logins = await UserManager.GetLoginsAsync(GetCurrentUserId()),
                 BrowserRemembered = await AuthenticationManager.TwoFactorBrowserRememberedAsync(User.Identity.GetUserId())
             };
 
             if (!ModelState.IsValid)
             {
-                return View("Index", indexModel);
+                TempData["Message"] = "Invalid CreateAccount model state, try again with valid data.";
+                return RedirectToAction("Index", indexModel);
             }
-
+            
             // Utilizing LINQ to query the last time this element was last created, as the anchor to prevent spam.
-            var lastAccountCreationTimestamp = await _context.BankAccounts
+            var lastAccountCreationTimestamp = await _dbContext.BankAccounts
                 .Where(a => a.Holder == userId)
                 .OrderByDescending(a => a.DateOpened)
                 .Select(a => a.DateOpened)
@@ -159,7 +240,7 @@ namespace BankingApp.Controllers
             var newAccount = new BankAccount
             {
                 Balance = model.Balance,
-                Holder = userId,
+                Holder = GetCurrentUserId(),
                 DateOpened = DateTime.Now,
                 AccountType = model.AccountType
             };
@@ -174,38 +255,73 @@ namespace BankingApp.Controllers
 
                 if (timeRemaining > TimeSpan.Zero)
                 {
-                    ModelState.AddModelError("CooldownTimerError", $"Please wait {timeRemaining} before creating a new account.");
-                    return View("Index", indexModel);
+                    TempData["Message"] = $"Please wait {timeRemaining} before creating a new account.";
+                    return RedirectToAction("Index", indexModel);
                 }
             }
 
-            _context.BankAccounts.Add(newAccount);
-            await _context.SaveChangesAsync();
+            _dbContext.BankAccounts.Add(newAccount);
+            await _dbContext.SaveChangesAsync();
 
-            return View("Index", indexModel);
+            TempData["Message"] = "Success with creating a bank account.";
+            return RedirectToAction("Index", indexModel);
         }
 
+        /*// GET: /Manage/CreateCard
+        [HttpGet]
+        public async Task<ActionResult> CreateCard()
+        {
+            int userId = GetCurrentUserId();
+            var bankAccounts = await _dbContext.BankAccounts
+                .Where(ba => ba.Holder == userId)
+                .ToListAsync();
+
+            var model = new CreateCardViewModel
+            {
+                BankAccounts = bankAccounts.Select(ba => new SelectListItem
+                {
+                    Value = ba.AccountID.ToString(),
+                    Text = $"{ba.AccountType} - {ba.AccountID}"
+                })
+            };
+
+            return View(model);
+        }*/
+
+        // POST: /Manage/CreateCard
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> CreateCard(CreateCardViewModel model)
         {
-            var userId = User.Identity.GetUserId<int>();
+            int userId = GetCurrentUserId();    // Must get the user's ID field for the LINQ functionality, as it cannot evaluate the function call directly.
             var indexModel = new IndexViewModel
             {
                 HasPassword = HasPassword(),
-                PhoneNumber = await UserManager.GetPhoneNumberAsync(userId),
-                TwoFactor = await UserManager.GetTwoFactorEnabledAsync(userId),
-                Logins = await UserManager.GetLoginsAsync(userId),
+                PhoneNumber = await UserManager.GetPhoneNumberAsync(GetCurrentUserId()),
+                TwoFactor = await UserManager.GetTwoFactorEnabledAsync(GetCurrentUserId()),
+                Logins = await UserManager.GetLoginsAsync(GetCurrentUserId()),
                 BrowserRemembered = await AuthenticationManager.TwoFactorBrowserRememberedAsync(User.Identity.GetUserId())
             };
 
             if (!ModelState.IsValid)
             {
-                return View("Index", indexModel);
+                // Reloading the bank accounts list if the model is invalid.
+                var bankAccounts = await _dbContext.BankAccounts
+                    .Where(ba => ba.Holder == userId)
+                    .ToListAsync();
+
+                model.BankAccounts = bankAccounts.Select(ba => new SelectListItem
+                {
+                    Value = ba.AccountID.ToString(),
+                    Text = $"{ba.AccountType} - {ba.AccountID}"
+                }).ToList();
+
+                TempData["Message"] = "Invalid CreateCard model, please try again with valid data.";
+                return RedirectToAction("Index", indexModel);
             }
 
             // Utilizing LINQ to query the last time this element was last created, as the anchor to prevent spam.
-            var lastCardCreationTimestamp = await _context.Cards
+            var lastCardCreationTimestamp = await _dbContext.Cards
                 .Where(a => a.AssociatedAccount == userId)
                 .OrderByDescending(a => a.IssueDate)
                 .Select(a => a.IssueDate)
@@ -220,8 +336,8 @@ namespace BankingApp.Controllers
 
                 if (timeRemaining > TimeSpan.Zero)
                 {
-                    ModelState.AddModelError("CooldownTimerError", $"Please wait {timeRemaining} seconds.");
-                    return View("Index", indexModel);
+                    TempData["Message"] = $"Please wait {timeRemaining} before creating a new card.";
+                    return RedirectToAction("Index", indexModel);
                 }
             }
 
@@ -244,22 +360,65 @@ namespace BankingApp.Controllers
             do
             {
                 generatedCardNumber = getUniqueString(11);  // Length - 1
-                isUnique = !_context.Cards.Any(c => c.CardNumber == generatedCardNumber);
+                isUnique = !_dbContext.Cards.Any(c => c.CardNumber == generatedCardNumber);
             }while(!isUnique && generatedCardNumber.Length != 11);
 
             var newCard = new Card
             {
                 CardType = model.CardType,
                 CardNumber = generatedCardNumber,
-                AssociatedAccount = userId,
+                AssociatedAccount = model.SelectedAccountID,
                 IssueDate = DateTime.Now,
                 Active = true
             };
 
-            _context.Cards.Add(newCard);
-            await _context.SaveChangesAsync();
+            _dbContext.Cards.Add(newCard);
+            await _dbContext.SaveChangesAsync();
 
-            return View("Index", indexModel);
+            TempData["Message"] = "Success with creating a card.";
+            return RedirectToAction("Index", indexModel);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        // POST: /Manage/TransferFunds
+        public async Task<ActionResult> TransferFunds(TransferFundsViewModel model)
+        {
+            int userId = GetCurrentUserId();    // Must get the user's ID field for the LINQ functionality, as it cannot evaluate the function call directly.
+            var indexModel = new IndexViewModel
+            {
+                HasPassword = HasPassword(),
+                PhoneNumber = await UserManager.GetPhoneNumberAsync(GetCurrentUserId()),
+                TwoFactor = await UserManager.GetTwoFactorEnabledAsync(GetCurrentUserId()),
+                Logins = await UserManager.GetLoginsAsync(GetCurrentUserId()),
+                BrowserRemembered = await AuthenticationManager.TwoFactorBrowserRememberedAsync(User.Identity.GetUserId())
+            };
+            var sourceAccount = await _dbContext.BankAccounts.FindAsync(model.SourceAccountId);
+            var destinationAccount = await _dbContext.BankAccounts.FindAsync(model.DestinationAccountId);
+
+            // Checking if both accounts exist and the source account has sufficient funds.
+            if (sourceAccount == null || destinationAccount == null)
+            {
+                TempData["Message"] = "One or both of the bank accounts do not exist.";
+                //ModelState.AddModelError("", "One or both of the bank accounts do not exist.");
+                return RedirectToAction("Index", indexModel); // Returning the same view with validation errors.
+            }
+
+            if (sourceAccount.Balance < model.Amount)
+            {
+                // Handle the case where the source account does not have sufficient funds
+                TempData["Message"] = "Insufficient funds in the source account.";
+                //ModelState.AddModelError("", "Insufficient funds in the source account.");
+                return RedirectToAction("Index", indexModel);
+            }
+
+            destinationAccount.Balance += model.Amount;
+            sourceAccount.Balance = sourceAccount.Balance - model.Amount;
+
+            await _dbContext.SaveChangesAsync();
+
+            TempData["Message"] = "Success with transfering the funds.";
+            return RedirectToAction("Index", indexModel);
         }
 
         //
@@ -280,7 +439,7 @@ namespace BankingApp.Controllers
                 return View(model);
             }
             // Generate the token and send it
-            var code = await UserManager.GenerateChangePhoneNumberTokenAsync(User.Identity.GetUserId<int>(), model.Number);
+            var code = await UserManager.GenerateChangePhoneNumberTokenAsync(GetCurrentUserId(), model.Number);
             if (UserManager.SmsService != null)
             {
                 var message = new IdentityMessage
@@ -299,8 +458,8 @@ namespace BankingApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> EnableTwoFactorAuthentication()
         {
-            await UserManager.SetTwoFactorEnabledAsync(User.Identity.GetUserId<int>(), true);
-            var user = await UserManager.FindByIdAsync(User.Identity.GetUserId<int>());
+            await UserManager.SetTwoFactorEnabledAsync(GetCurrentUserId(), true);
+            var user = await UserManager.FindByIdAsync(GetCurrentUserId());
             if (user != null)
             {
                 await SignInManager.SignInAsync(user, isPersistent: false, rememberBrowser: false);
@@ -314,8 +473,8 @@ namespace BankingApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> DisableTwoFactorAuthentication()
         {
-            await UserManager.SetTwoFactorEnabledAsync(User.Identity.GetUserId<int>(), false);
-            var user = await UserManager.FindByIdAsync(User.Identity.GetUserId<int>());
+            await UserManager.SetTwoFactorEnabledAsync(GetCurrentUserId(), false);
+            var user = await UserManager.FindByIdAsync(GetCurrentUserId());
             if (user != null)
             {
                 await SignInManager.SignInAsync(user, isPersistent: false, rememberBrowser: false);
@@ -327,7 +486,7 @@ namespace BankingApp.Controllers
         // GET: /Manage/VerifyPhoneNumber
         public async Task<ActionResult> VerifyPhoneNumber(string phoneNumber)
         {
-            var code = await UserManager.GenerateChangePhoneNumberTokenAsync(User.Identity.GetUserId<int>(), phoneNumber);
+            var code = await UserManager.GenerateChangePhoneNumberTokenAsync(GetCurrentUserId(), phoneNumber);
             // Send an SMS through the SMS provider to verify the phone number
             return phoneNumber == null ? View("Error") : View(new VerifyPhoneNumberViewModel { PhoneNumber = phoneNumber });
         }
@@ -342,10 +501,10 @@ namespace BankingApp.Controllers
             {
                 return View(model);
             }
-            var result = await UserManager.ChangePhoneNumberAsync(User.Identity.GetUserId<int>(), model.PhoneNumber, model.Code);
+            var result = await UserManager.ChangePhoneNumberAsync(GetCurrentUserId(), model.PhoneNumber, model.Code);
             if (result.Succeeded)
             {
-                var user = await UserManager.FindByIdAsync(User.Identity.GetUserId<int>());
+                var user = await UserManager.FindByIdAsync(GetCurrentUserId());
                 if (user != null)
                 {
                     await SignInManager.SignInAsync(user, isPersistent: false, rememberBrowser: false);
@@ -363,12 +522,12 @@ namespace BankingApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> RemovePhoneNumber()
         {
-            var result = await UserManager.SetPhoneNumberAsync(User.Identity.GetUserId<int>(), null);
+            var result = await UserManager.SetPhoneNumberAsync(GetCurrentUserId(), null);
             if (!result.Succeeded)
             {
                 return RedirectToAction("Index", new { Message = ManageMessageId.Error });
             }
-            var user = await UserManager.FindByIdAsync(User.Identity.GetUserId<int>());
+            var user = await UserManager.FindByIdAsync(GetCurrentUserId());
             if (user != null)
             {
                 await SignInManager.SignInAsync(user, isPersistent: false, rememberBrowser: false);
@@ -393,10 +552,10 @@ namespace BankingApp.Controllers
             {
                 return View(model);
             }
-            var result = await UserManager.ChangePasswordAsync(User.Identity.GetUserId<int>(), model.OldPassword, model.NewPassword);
+            var result = await UserManager.ChangePasswordAsync(GetCurrentUserId(), model.OldPassword, model.NewPassword);
             if (result.Succeeded)
             {
-                var user = await UserManager.FindByIdAsync(User.Identity.GetUserId<int>());
+                var user = await UserManager.FindByIdAsync(GetCurrentUserId());
                 if (user != null)
                 {
                     await SignInManager.SignInAsync(user, isPersistent: false, rememberBrowser: false);
@@ -422,10 +581,10 @@ namespace BankingApp.Controllers
         {
             if (ModelState.IsValid)
             {
-                var result = await UserManager.AddPasswordAsync(User.Identity.GetUserId<int>(), model.NewPassword);
+                var result = await UserManager.AddPasswordAsync(GetCurrentUserId(), model.NewPassword);
                 if (result.Succeeded)
                 {
-                    var user = await UserManager.FindByIdAsync(User.Identity.GetUserId<int>());
+                    var user = await UserManager.FindByIdAsync(GetCurrentUserId());
                     if (user != null)
                     {
                         await SignInManager.SignInAsync(user, isPersistent: false, rememberBrowser: false);
@@ -447,12 +606,12 @@ namespace BankingApp.Controllers
                 message == ManageMessageId.RemoveLoginSuccess ? "The external login was removed."
                 : message == ManageMessageId.Error ? "An error has occurred."
                 : "";
-            var user = await UserManager.FindByIdAsync(User.Identity.GetUserId<int>());
+            var user = await UserManager.FindByIdAsync(GetCurrentUserId());
             if (user == null)
             {
                 return View("Error");
             }
-            var userLogins = await UserManager.GetLoginsAsync(User.Identity.GetUserId<int>());
+            var userLogins = await UserManager.GetLoginsAsync(GetCurrentUserId());
             var otherLogins = AuthenticationManager.GetExternalAuthenticationTypes().Where(auth => userLogins.All(ul => auth.AuthenticationType != ul.LoginProvider)).ToList();
             ViewBag.ShowRemoveButton = user.PasswordHash != null || userLogins.Count > 1;
             return View(new ManageLoginsViewModel
@@ -481,7 +640,7 @@ namespace BankingApp.Controllers
             {
                 return RedirectToAction("ManageLogins", new { Message = ManageMessageId.Error });
             }
-            var result = await UserManager.AddLoginAsync(User.Identity.GetUserId<int>(), loginInfo.Login);
+            var result = await UserManager.AddLoginAsync(GetCurrentUserId(), loginInfo.Login);
             return result.Succeeded ? RedirectToAction("ManageLogins") : RedirectToAction("ManageLogins", new { Message = ManageMessageId.Error });
         }
 
@@ -518,7 +677,7 @@ namespace BankingApp.Controllers
 
         private bool HasPassword()
         {
-            var user = UserManager.FindById(User.Identity.GetUserId<int>());
+            var user = UserManager.FindById(GetCurrentUserId());
             if (user != null)
             {
                 return user.PasswordHash != null;
@@ -528,7 +687,7 @@ namespace BankingApp.Controllers
 
         private bool HasPhoneNumber()
         {
-            var user = UserManager.FindById(User.Identity.GetUserId<int>());
+            var user = UserManager.FindById(GetCurrentUserId());
             if (user != null)
             {
                 return user.PhoneNumber != null;

@@ -85,6 +85,12 @@
             </dd>
         </dl>
     </div>
+    @if (ViewBag.Message != null)
+    {
+        <div class="alert alert-primary" role="alert">
+            @ViewBag.Message
+        </div>
+    }
     <br />
     <h3>Bank Account Settings</h3>
     <hr />
@@ -109,7 +115,7 @@
         <div class="tab-content" id="nav-tabContent">
             <div class="tab-pane fade show active" id="view-accounts" role="tabpanel" aria-labelledby="nav-tab-view-accounts">
                 <div id="view-accounts-content">
-                    @Html.Partial("_ViewAccountsPartial", new List<BankingApp.Models.BankAccount>())
+                    @Html.Partial("_ViewAccountsPartial", Model.DisplayAccountInfoViewModel)
                 </div>
             </div>
             <div class="tab-pane fade" id="create-account" role="tabpanel" aria-labelledby="nav-tab-create-account">
@@ -119,12 +125,12 @@
             </div>
             <div class="tab-pane fade" id="create-card" role="tabpanel" aria-labelledby="nav-tab-create-card">
                 <div id="create-card-content">
-                    @Html.Partial("_CreateCardPartial", new BankingApp.Models.CreateCardViewModel())
+                    @Html.Partial("_CreateCardPartial", Model.CreateCardViewModel)
                 </div>
             </div>
-            <div class="tab-pane fade" id="create-card" role="tabpanel" aria-labelledby="nav-tab-transfer">
+            <div class="tab-pane fade" id="transfer" role="tabpanel" aria-labelledby="nav-tab-transfer">
                 <div id="create-card-content">
-                    @Html.Partial("_TransferPartial")
+                    @Html.Partial("_TransferPartial", Model.TransferFundsViewModel)
                 </div>
             </div>
         </div>

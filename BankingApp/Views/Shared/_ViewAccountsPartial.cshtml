@@ -1,21 +1,54 @@
-﻿@model List<BankingApp.Models.BankAccount>
-<table class="table table-striped table-hover">
-    <thead>
-        <tr>
-            <th scope="col">Account ID</th>
-            <th scope="col">Account Type</th>
-            <th scope="col">Account Balance</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model)
-        {
-            <tr>
-                <th>scope="row"</th>
-                <td>@item.AccountID</td>
-                <td>@item.AccountType</td>
-                <td>@item.Balance</td>
-            </tr>
-        }
-    </tbody>
-</table>
+﻿@model BankingApp.Models.DisplayAccountInfoViewModel
+@if (Model.Accounts == null || !Model.Accounts.Any())
+{
+    <div class="alert alert-primary" role="alert">
+        Could not find any bank account data. Please create some.
+    </div>
+}
+else
+{
+    foreach (var account in Model.Accounts)
+    {
+        <table class="table table-striped">
+            <thead class="thead-dark">
+                <tr>
+                    <th scope="col">Account ID</th>
+                    <th scope="col">Account Type</th>
+                    <th scope="col">Account Balance</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>@account.AccountID</td>
+                    <td>@account.AccountType</td>
+                    <td>@account.Balance</td>
+                </tr>
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3">
+                        <table class="table table-hover">
+                            <thead class="thead-dark">
+                                <tr>
+                                    <th scope="col">Card ID</th>
+                                    <th scope="col">Card Type</th>
+                                    <th scope="col">Card Number</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var card in Model.Cards.Where(c => c.AssociatedAccount == account.AccountID))
+                                {
+                                    <tr>
+                                        <td>@card.CardID</td>
+                                        <td>@card.CardType</td>
+                                        <td>@card.CardNumber</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
+    }
+}

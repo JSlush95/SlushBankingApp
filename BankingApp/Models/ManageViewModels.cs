@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Data.Entity;
+using System.Web.Mvc;
 using Microsoft.AspNet.Identity;
 using Microsoft.Owin.Security;
 
@@ -14,6 +15,9 @@ namespace BankingApp.Models
         public string PhoneNumber { get; set; }
         public bool TwoFactor { get; set; }
         public bool BrowserRemembered { get; set; }
+        public CreateCardViewModel CreateCardViewModel { get; set; }
+        public TransferFundsViewModel TransferFundsViewModel { get; set; }
+        public DisplayAccountInfoViewModel DisplayAccountInfoViewModel { get; set; }
     }
 
     public class ManageLoginsViewModel
@@ -37,7 +41,7 @@ namespace BankingApp.Models
 
         [DataType(DataType.Password)]
         [Display(Name = "Confirm new password")]
-        [Compare("NewPassword", ErrorMessage = "The new password and confirmation password do not match.")]
+        [System.ComponentModel.DataAnnotations.Compare("NewPassword", ErrorMessage = "The new password and confirmation password do not match.")]
         public string ConfirmPassword { get; set; }
     }
 
@@ -56,7 +60,7 @@ namespace BankingApp.Models
 
         [DataType(DataType.Password)]
         [Display(Name = "Confirm new password")]
-        [Compare("NewPassword", ErrorMessage = "The new password and confirmation password do not match.")]
+        [System.ComponentModel.DataAnnotations.Compare("NewPassword", ErrorMessage = "The new password and confirmation password do not match.")]
         public string ConfirmPassword { get; set; }
     }
 
@@ -86,12 +90,11 @@ namespace BankingApp.Models
         public ICollection<System.Web.Mvc.SelectListItem> Providers { get; set; }
     }
 
-    /*public class ViewAccounts
+    public class DisplayAccountInfoViewModel
     {
-        private DbSet<Card> Cards = new DbSet<Card> { new Card() };
-        private DbSet<TransactionRecord> TransactionRecords = new DbSet<TransactionRecord> { new TransactionRecord() };
-        
-    }*/
+        public List<BankAccount> Accounts { get; set; }
+        public List<Card> Cards { get; set; }
+    }
 
     public class CreateAccountViewModel
     {
@@ -107,24 +110,32 @@ namespace BankingApp.Models
 
     public class CreateCardViewModel
     {
-        /*[Required]
-        [Display(Name = "Card Number")]
-        public string CardNumber { get; set; }*/
+        [Required(ErrorMessage = "Please select an account")]
+        [Display(Name = "Bank Account ID")]
+        public int SelectedAccountID { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Please select a card type")]
         [Display(Name = "Card Type")]
         public CardType CardType { get; set; }
+        public IEnumerable<SelectListItem> BankAccounts { get; set; }
     }
 
     public class TransferFundsViewModel
     {
-        [Required]
-        [Display(Name = "Sender")]
-        [Range(0, Double.MaxValue, ErrorMessage = "Please enter a valid balance")]
-        public decimal SenderAmount { get; set; }
-        [Required]
-        [Display(Name = "Recipient")]
-        [Range(0, Double.MaxValue, ErrorMessage = "Please enter a valid balance")]
-        public decimal RecipientAmount { get; set; }
+        [Required(ErrorMessage = "Please select the amount to send")]
+        [Display(Name = "Source Account")]
+        public int SourceAccountId { get; set; }
+
+        [Required(ErrorMessage = "Please select the destination account")]
+        [Display(Name = "Destination Account")]
+        public int DestinationAccountId { get; set; }
+
+        [Required(ErrorMessage = "Please enter the amount to transfer")]
+        [Range(0.01, Double.MaxValue, ErrorMessage = "Please enter a valid amount")]
+        [Display(Name = "Amount")]
+        public decimal Amount { get; set; }
+
+        public IEnumerable<SelectListItem> SourceAccounts { get; set; }
+        public IEnumerable<SelectListItem> DestinationAccounts { get; set; }
     }
 }
