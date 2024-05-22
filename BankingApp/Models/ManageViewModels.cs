@@ -18,6 +18,7 @@ namespace BankingApp.Models
         public CreateCardViewModel CreateCardViewModel { get; set; }
         public TransferFundsViewModel TransferFundsViewModel { get; set; }
         public DisplayAccountInfoViewModel DisplayAccountInfoViewModel { get; set; }
+        public DisplayTransferInfoViewModel DisplayTransferInfoViewModel { get; set; }
     }
 
     public class ManageLoginsViewModel
@@ -96,15 +97,20 @@ namespace BankingApp.Models
         public List<Card> Cards { get; set; }
     }
 
+    public class DisplayTransferInfoViewModel
+    {
+        public List<TransactionRecord> Transactions { get; set; }
+    }
+
     public class CreateAccountViewModel
     {
-        [Required]
+        [Required(ErrorMessage = "Please select a valid account type")]
         [Display(Name = "Account Type")]
         public AccountType AccountType { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Please enter the amount to transfer")]
         [Display(Name = "Balance")]
-        [Range(0, Double.MaxValue, ErrorMessage = "Please enter a valid balance")]
+        [Range(0.01, Double.MaxValue, ErrorMessage = "Please enter a valid balance")]
         public decimal Balance { get; set; }
     }
 

@@ -87,6 +87,21 @@ namespace BankingApp.Controllers
             return User.Identity.GetUserId<int>();
         }
 
+        private async Task<IndexViewModel> CreateIndexViewModel()
+        {
+            var userId = GetCurrentUserId();
+            var indexModel = new IndexViewModel
+            {
+                HasPassword = HasPassword(),
+                PhoneNumber = await UserManager.GetPhoneNumberAsync(userId),
+                TwoFactor = await UserManager.GetTwoFactorEnabledAsync(userId),
+                Logins = await UserManager.GetLoginsAsync(userId),
+                BrowserRemembered = await AuthenticationManager.TwoFactorBrowserRememberedAsync(User.Identity.GetUserId())
+            };
+
+            return indexModel;
+        }
+
         //
         // GET: /Manage/Index
         public async Task<ActionResult> Index(ManageMessageId? message)
@@ -106,48 +121,49 @@ namespace BankingApp.Controllers
                 .Where(ba => ba.Holder == userId)
                 .ToListAsync();
             var cards = await _dbContext.Cards
-                .Where(c => c.AssociatedAccount == userId && c.AssociatedBankAccount.Holder == userId)
+                .Where(c => c.AssociatedBankAccount.Holder == userId)
                 .ToListAsync();
+            var transactions = await _dbContext.TransactionRecords
+                    .Where(t => t.Sender == userId || t.Recipient == userId)
+                    .ToListAsync();
 
             if (TempData.ContainsKey("Message"))
             {
                 ViewBag.Message = TempData["Message"].ToString();
             }
 
-            var model = new IndexViewModel
+            var model = await CreateIndexViewModel();
+            model.CreateCardViewModel = new CreateCardViewModel
             {
-                HasPassword = HasPassword(),
-                PhoneNumber = await UserManager.GetPhoneNumberAsync(GetCurrentUserId()),
-                TwoFactor = await UserManager.GetTwoFactorEnabledAsync(GetCurrentUserId()),
-                Logins = await UserManager.GetLoginsAsync(GetCurrentUserId()),
-                BrowserRemembered = await AuthenticationManager.TwoFactorBrowserRememberedAsync(User.Identity.GetUserId()),
-                CreateCardViewModel = new CreateCardViewModel
+                BankAccounts = bankAccounts.Select(ba => new SelectListItem
                 {
-                    BankAccounts = bankAccounts.Select(ba => new SelectListItem
-                    {
-                        Value = ba.AccountID.ToString(),
-                        Text = $"Account ID: {ba.AccountID} - {ba.AccountType}"
-                    }).ToList()
-                },
-                TransferFundsViewModel = new TransferFundsViewModel
-                {
-                    SourceAccounts = bankAccounts.Select(ba => new SelectListItem
-                    {
-                        Value = ba.AccountID.ToString(),
-                        Text = $"Account ID: {ba.AccountID} - {ba.AccountType} - Balance: {ba.Balance}"
-                    }),
-                    DestinationAccounts = bankAccounts.Select(ba => new SelectListItem
-                    {
-                        Value = ba.AccountID.ToString(),
-                        Text = $"Account ID: {ba.AccountID} - {ba.AccountType} - Balance: {ba.Balance}"
-                    })
-                },
-                DisplayAccountInfoViewModel = new DisplayAccountInfoViewModel
-                {
-                    Accounts = bankAccounts,
-                    Cards = cards
-                }
+                    Value = ba.AccountID.ToString(),
+                    Text = $"Account ID: {ba.AccountID} - {ba.AccountType}"
+                }).ToList()
             };
+            model.TransferFundsViewModel = new TransferFundsViewModel
+            {
+                SourceAccounts = bankAccounts.Select(ba => new SelectListItem
+                {
+                    Value = ba.AccountID.ToString(),
+                    Text = $"Account ID: {ba.AccountID} - {ba.AccountType} - Balance: {ba.Balance}"
+                }),
+                DestinationAccounts = bankAccounts.Select(ba => new SelectListItem
+                {
+                    Value = ba.AccountID.ToString(),
+                    Text = $"Account ID: {ba.AccountID} - {ba.AccountType} - Balance: {ba.Balance}"
+                })
+            };
+            model.DisplayAccountInfoViewModel = new DisplayAccountInfoViewModel
+            {
+                Accounts = bankAccounts,
+                Cards = cards
+            };
+            model.DisplayTransferInfoViewModel = new DisplayTransferInfoViewModel
+            {
+                Transactions = transactions
+            };
+
             return View(model);
         }
 
@@ -175,58 +191,16 @@ namespace BankingApp.Controllers
             return RedirectToAction("ManageLogins", new { Message = message });
         }
 
-        /*// GET: /Manage/DisplayAccountInfo
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<ActionResult> DisplayAccountInfo(DisplayAccountInfoViewModel model)
-        {
-            var indexModel = new IndexViewModel
-            {
-                HasPassword = HasPassword(),
-                PhoneNumber = await UserManager.GetPhoneNumberAsync(GetCurrentUserId()),
-                TwoFactor = await UserManager.GetTwoFactorEnabledAsync(GetCurrentUserId()),
-                Logins = await UserManager.GetLoginsAsync(GetCurrentUserId()),
-                BrowserRemembered = await AuthenticationManager.TwoFactorBrowserRememberedAsync(User.Identity.GetUserId())
-            };
-            int userId = GetCurrentUserId();
-            var bankAccounts = await _dbContext.BankAccounts
-                .Where(ba => ba.Holder == userId)
-                .ToListAsync();
-
-            var BankAccountsWithCards = new Dictionary<BankAccount, List<Card>>();
-
-            foreach (var account in bankAccounts)
-            {
-                var cards = await _dbContext.Cards
-                    .Where(c => c.AssociatedAccount == account.AccountID)
-                    .ToListAsync();
-
-                BankAccountsWithCards[account] = cards;
-            }
-
-            model.BankAccountsWithCards = BankAccountsWithCards;
-
-            return View(model);
-        }*/
-
         // POST: /Manage/CreateAccount
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> CreateAccount(CreateAccountViewModel model)
         {
             int userId = GetCurrentUserId();    // Must get the user's ID field for the LINQ functionality, as it cannot evaluate the function call directly.
-            var indexModel = new IndexViewModel
-            {
-                HasPassword = HasPassword(),
-                PhoneNumber = await UserManager.GetPhoneNumberAsync(GetCurrentUserId()),
-                TwoFactor = await UserManager.GetTwoFactorEnabledAsync(GetCurrentUserId()),
-                Logins = await UserManager.GetLoginsAsync(GetCurrentUserId()),
-                BrowserRemembered = await AuthenticationManager.TwoFactorBrowserRememberedAsync(User.Identity.GetUserId())
-            };
-
+            var indexModel = await CreateIndexViewModel();
             if (!ModelState.IsValid)
             {
-                TempData["Message"] = "Invalid CreateAccount model state, try again with valid data.";
+                TempData["Message"] = "Invalid input, try again with valid data.";
                 return RedirectToAction("Index", indexModel);
             }
             
@@ -267,56 +241,17 @@ namespace BankingApp.Controllers
             return RedirectToAction("Index", indexModel);
         }
 
-        /*// GET: /Manage/CreateCard
-        [HttpGet]
-        public async Task<ActionResult> CreateCard()
-        {
-            int userId = GetCurrentUserId();
-            var bankAccounts = await _dbContext.BankAccounts
-                .Where(ba => ba.Holder == userId)
-                .ToListAsync();
-
-            var model = new CreateCardViewModel
-            {
-                BankAccounts = bankAccounts.Select(ba => new SelectListItem
-                {
-                    Value = ba.AccountID.ToString(),
-                    Text = $"{ba.AccountType} - {ba.AccountID}"
-                })
-            };
-
-            return View(model);
-        }*/
-
         // POST: /Manage/CreateCard
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> CreateCard(CreateCardViewModel model)
         {
             int userId = GetCurrentUserId();    // Must get the user's ID field for the LINQ functionality, as it cannot evaluate the function call directly.
-            var indexModel = new IndexViewModel
-            {
-                HasPassword = HasPassword(),
-                PhoneNumber = await UserManager.GetPhoneNumberAsync(GetCurrentUserId()),
-                TwoFactor = await UserManager.GetTwoFactorEnabledAsync(GetCurrentUserId()),
-                Logins = await UserManager.GetLoginsAsync(GetCurrentUserId()),
-                BrowserRemembered = await AuthenticationManager.TwoFactorBrowserRememberedAsync(User.Identity.GetUserId())
-            };
+            var indexModel = await CreateIndexViewModel();
 
             if (!ModelState.IsValid)
             {
-                // Reloading the bank accounts list if the model is invalid.
-                var bankAccounts = await _dbContext.BankAccounts
-                    .Where(ba => ba.Holder == userId)
-                    .ToListAsync();
-
-                model.BankAccounts = bankAccounts.Select(ba => new SelectListItem
-                {
-                    Value = ba.AccountID.ToString(),
-                    Text = $"{ba.AccountType} - {ba.AccountID}"
-                }).ToList();
-
-                TempData["Message"] = "Invalid CreateCard model, please try again with valid data.";
+                TempData["Message"] = "Invalid input data, please try again with valid input.";
                 return RedirectToAction("Index", indexModel);
             }
 
@@ -384,24 +319,28 @@ namespace BankingApp.Controllers
         // POST: /Manage/TransferFunds
         public async Task<ActionResult> TransferFunds(TransferFundsViewModel model)
         {
-            int userId = GetCurrentUserId();    // Must get the user's ID field for the LINQ functionality, as it cannot evaluate the function call directly.
-            var indexModel = new IndexViewModel
-            {
-                HasPassword = HasPassword(),
-                PhoneNumber = await UserManager.GetPhoneNumberAsync(GetCurrentUserId()),
-                TwoFactor = await UserManager.GetTwoFactorEnabledAsync(GetCurrentUserId()),
-                Logins = await UserManager.GetLoginsAsync(GetCurrentUserId()),
-                BrowserRemembered = await AuthenticationManager.TwoFactorBrowserRememberedAsync(User.Identity.GetUserId())
-            };
+            var indexModel = await CreateIndexViewModel();
             var sourceAccount = await _dbContext.BankAccounts.FindAsync(model.SourceAccountId);
             var destinationAccount = await _dbContext.BankAccounts.FindAsync(model.DestinationAccountId);
+
+            if (!ModelState.IsValid)
+            {
+                TempData["Message"] = "Error with the input data, try again with valid values.";
+                return RedirectToAction("Index", indexModel);
+            }
 
             // Checking if both accounts exist and the source account has sufficient funds.
             if (sourceAccount == null || destinationAccount == null)
             {
                 TempData["Message"] = "One or both of the bank accounts do not exist.";
                 //ModelState.AddModelError("", "One or both of the bank accounts do not exist.");
-                return RedirectToAction("Index", indexModel); // Returning the same view with validation errors.
+                return RedirectToAction("Index", indexModel);
+            }
+
+            if (sourceAccount.AccountID == destinationAccount.AccountID)
+            {
+                TempData["Message"] = "Please choose different accounts to transfer funds.";
+                return RedirectToAction("Index", indexModel);
             }
 
             if (sourceAccount.Balance < model.Amount)
@@ -413,8 +352,17 @@ namespace BankingApp.Controllers
             }
 
             destinationAccount.Balance += model.Amount;
-            sourceAccount.Balance = sourceAccount.Balance - model.Amount;
+            sourceAccount.Balance -= model.Amount;
 
+            TransactionRecord transactionRecord = new TransactionRecord()
+            {
+                Sender = sourceAccount.AccountID,
+                Recipient = destinationAccount.AccountID,
+                Amount = model.Amount,
+                TimeExecuted = DateTime.Now
+            };
+
+            _dbContext.TransactionRecords.Add(transactionRecord);
             await _dbContext.SaveChangesAsync();
 
             TempData["Message"] = "Success with transfering the funds.";

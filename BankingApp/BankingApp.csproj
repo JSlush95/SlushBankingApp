@@ -309,6 +309,7 @@
     <Content Include="Views\Shared\_ViewAccountsPartial.cshtml" />
     <Content Include="Views\Shared\_CreateCardPartial.cshtml" />
     <Content Include="Views\Shared\_TransferPartial.cshtml" />
+    <Content Include="Views\Shared\_ViewTransfersPartial.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

@@ -101,6 +101,9 @@
                 <a class="nav-link active" id="nav-tab-view-accounts" data-bs-toggle="tab" href="#view-accounts" role="tab" aria-controls="view-accounts" aria-selected="true">Current Bank Accounts</a>
             </li>
             <li class="nav-item">
+                <a class="nav-link" id="nav-tab-view-transfers" data-bs-toggle="tab" href="#transfer-funds" role="tab" aria-controls="create-account" aria-selected="false">Current Transfers</a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link" id="nav-tab-create-account" data-bs-toggle="tab" href="#create-account" role="tab" aria-controls="create-account" aria-selected="false">Create Bank Account</a>
             </li>
             <li class="nav-item">
@@ -116,6 +119,11 @@
             <div class="tab-pane fade show active" id="view-accounts" role="tabpanel" aria-labelledby="nav-tab-view-accounts">
                 <div id="view-accounts-content">
                     @Html.Partial("_ViewAccountsPartial", Model.DisplayAccountInfoViewModel)
+                </div>
+            </div>
+            <div class="tab-pane fade" id="transfer-funds" role="tabpanel" aria-labelledby="nav-tab-view-transfers">
+                <div id="view-transfers-content">
+                    @Html.Partial("_ViewTransfersPartial", Model.DisplayTransferInfoViewModel)
                 </div>
             </div>
             <div class="tab-pane fade" id="create-account" role="tabpanel" aria-labelledby="nav-tab-create-account">

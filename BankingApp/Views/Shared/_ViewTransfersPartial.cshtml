@@ -1,0 +1,30 @@
+﻿
+@model BankingApp.Models.DisplayTransferInfoViewModel
+@if (Model.Transactions == null || !Model.Transactions.Any())
+{
+    <div class="alert alert-primary" role="alert">
+        Could not find any transfer data. Please create some.
+    </div>
+}
+else
+{
+    <table class="table table-striped table-hover">
+        <thead>
+            <tr>
+                <th scope="col">Sender Account ID</th>
+                <th scope="col">Amount Delivered</th>
+                <th scope="col">Receiving Account ID</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var record in Model.Transactions)
+            {
+                <tr>
+                    <td>@record.SenderAccount.AccountID</td>
+                    <td>@record.Amount</td>
+                    <td>@record.RecipientAccount.AccountID</td>
+                </tr>
+            }
+            </tbody>
+    </table>
+}
