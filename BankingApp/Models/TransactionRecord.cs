@@ -19,6 +19,8 @@ namespace BankingApp.Models
         [Required]
         public decimal Amount { get; set; }
         [Required]
+        public string Description { get; set; }
+        [Required]
         public DateTime TimeExecuted { get; set; }
         [Required]
         public bool Pending { get; set; }

@@ -57,6 +57,12 @@ namespace BankingApp.Controllers
         [AllowAnonymous]
         public ActionResult Login(string returnUrl)
         {
+            // If user is already authenticated, then redirect to the login success route.
+            if (User.Identity.IsAuthenticated)
+            {
+                return RedirectToLocal(returnUrl);
+            }
+
             ViewBag.ReturnUrl = returnUrl;
             return View();
         }
@@ -139,6 +145,12 @@ namespace BankingApp.Controllers
         [AllowAnonymous]
         public ActionResult Register()
         {
+            // If user is already authenticated, then redirect to the login success route.
+            if (User.Identity.IsAuthenticated)
+            {
+                return RedirectToLocal(null);
+            }
+
             return View();
         }
 
@@ -163,9 +175,10 @@ namespace BankingApp.Controllers
                     
                     // For more information on how to enable account confirmation and password reset please visit https://go.microsoft.com/fwlink/?LinkID=320771
                     // Send an email with this link
-                    // string code = await UserManager.GenerateEmailConfirmationTokenAsync(user.Id);
-                    // var callbackUrl = Url.Action("ConfirmEmail", "Account", new { userId = user.Id, code = code }, protocol: Request.Url.Scheme);
-                    // await UserManager.SendEmailAsync(user.Id, "Confirm your account", "Please confirm your account by clicking <a href=\"" + callbackUrl + "\">here</a>");
+                    string code = await UserManager.GenerateEmailConfirmationTokenAsync(user.Id);
+                    var callbackUrl = Url.Action("ConfirmEmail", "Account", new { userId = user.Id, code = code }, protocol: Request.Url.Scheme);
+                    string emailBody = $"Thank you for signing up for my fake banking website!<br/>Please confirm your account by clicking <a href=\"{callbackUrl}\">here</a>";
+                    await UserManager.SendEmailAsync(user.Id, "Account Confirmation", emailBody);
 
                     return RedirectToAction("Index", "Home");
                 }
@@ -178,7 +191,7 @@ namespace BankingApp.Controllers
 
         //
         // GET: /Account/ConfirmEmail
-        //[AllowAnonymous]
+        [AllowAnonymous]
         public async Task<ActionResult> ConfirmEmail(int userId, string code)
         {
             if (userId == default(int) || code == null)
@@ -191,7 +204,7 @@ namespace BankingApp.Controllers
 
         //
         // GET: /Account/ForgotPassword
-        //[AllowAnonymous]
+        [AllowAnonymous]
         public ActionResult ForgotPassword()
         {
             return View();
@@ -200,7 +213,7 @@ namespace BankingApp.Controllers
         //
         // POST: /Account/ForgotPassword
         [HttpPost]
-        //[AllowAnonymous]
+        [AllowAnonymous]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> ForgotPassword(ForgotPasswordViewModel model)
         {
@@ -215,10 +228,10 @@ namespace BankingApp.Controllers
 
                 // For more information on how to enable account confirmation and password reset please visit https://go.microsoft.com/fwlink/?LinkID=320771
                 // Send an email with this link
-                // string code = await UserManager.GeneratePasswordResetTokenAsync(user.Id);
-                // var callbackUrl = Url.Action("ResetPassword", "Account", new { userId = user.Id, code = code }, protocol: Request.Url.Scheme);		
-                // await UserManager.SendEmailAsync(user.Id, "Reset Password", "Please reset your password by clicking <a href=\"" + callbackUrl + "\">here</a>");
-                // return RedirectToAction("ForgotPasswordConfirmation", "Account");
+                string code = await UserManager.GeneratePasswordResetTokenAsync(user.Id);
+                var callbackUrl = Url.Action("ResetPassword", "Account", new { userId = user.Id, code = code }, protocol: Request.Url.Scheme);		
+                await UserManager.SendEmailAsync(user.Id, "Reset Password", "Please reset your password by clicking <a href=\"" + callbackUrl + "\">here</a>");
+                return RedirectToAction("ForgotPasswordConfirmation", "Account");
             }
 
             // If we got this far, something failed, redisplay form
@@ -227,7 +240,7 @@ namespace BankingApp.Controllers
 
         //
         // GET: /Account/ForgotPasswordConfirmation
-        //[AllowAnonymous]
+        [AllowAnonymous]
         public ActionResult ForgotPasswordConfirmation()
         {
             return View();
@@ -235,7 +248,7 @@ namespace BankingApp.Controllers
 
         //
         // GET: /Account/ResetPassword
-        //[AllowAnonymous]
+        [AllowAnonymous]
         public ActionResult ResetPassword(string code)
         {
             return code == null ? View("Error") : View();
@@ -244,7 +257,7 @@ namespace BankingApp.Controllers
         //
         // POST: /Account/ResetPassword
         [HttpPost]
-        //[AllowAnonymous]
+        [AllowAnonymous]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> ResetPassword(ResetPasswordViewModel model)
         {
@@ -269,7 +282,7 @@ namespace BankingApp.Controllers
 
         //
         // GET: /Account/ResetPasswordConfirmation
-        //[AllowAnonymous]
+        [AllowAnonymous]
         public ActionResult ResetPasswordConfirmation()
         {
             return View();
@@ -278,7 +291,7 @@ namespace BankingApp.Controllers
         //
         // POST: /Account/ExternalLogin
         [HttpPost]
-        //[AllowAnonymous]
+        [AllowAnonymous]
         [ValidateAntiForgeryToken]
         public ActionResult ExternalLogin(string provider, string returnUrl)
         {
@@ -323,7 +336,7 @@ namespace BankingApp.Controllers
 
         //
         // GET: /Account/ExternalLoginCallback
-       // [AllowAnonymous]
+       [AllowAnonymous]
         public async Task<ActionResult> ExternalLoginCallback(string returnUrl)
         {
             var loginInfo = await AuthenticationManager.GetExternalLoginInfoAsync();
@@ -401,7 +414,7 @@ namespace BankingApp.Controllers
 
         //
         // GET: /Account/ExternalLoginFailure
-        //[AllowAnonymous]
+        [AllowAnonymous]
         public ActionResult ExternalLoginFailure()
         {
             return View();

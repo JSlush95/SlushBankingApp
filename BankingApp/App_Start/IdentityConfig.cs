@@ -11,6 +11,7 @@ using Microsoft.AspNet.Identity.Owin;
 using Microsoft.Owin;
 using Microsoft.Owin.Security;
 using BankingApp.Models;
+using System.Configuration;
 
 namespace BankingApp
 {
@@ -18,8 +19,34 @@ namespace BankingApp
     {
         public Task SendAsync(IdentityMessage message)
         {
-            // Plug in your email service here to send an email.
-            return Task.FromResult(0);
+            // Credentials
+            var credentialUserName = ConfigurationManager.AppSettings["MailAccount"];
+            var sentFrom = ConfigurationManager.AppSettings["MailAccount"];
+            var password = ConfigurationManager.AppSettings["MailPassword"];
+
+            // Configure the client
+            System.Net.Mail.SmtpClient client =
+                new System.Net.Mail.SmtpClient(ConfigurationManager.AppSettings["SmtpHost"]);
+
+            client.Port = 587;
+            client.DeliveryMethod = System.Net.Mail.SmtpDeliveryMethod.Network;
+            client.UseDefaultCredentials = false;
+
+            // Create the credentials
+            System.Net.NetworkCredential credentials =
+                new System.Net.NetworkCredential(credentialUserName, password);
+
+            client.EnableSsl = true;
+            client.Credentials = credentials;
+
+            // Create the message
+            var mail =
+                new System.Net.Mail.MailMessage(sentFrom, message.Destination);
+
+            mail.Subject = message.Subject;
+            mail.Body = message.Body;
+
+            return client.SendMailAsync(mail);
         }
     }
 

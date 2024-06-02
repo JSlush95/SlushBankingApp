@@ -20,7 +20,7 @@ namespace BankingApp.Controllers
         private ApplicationDbContext _dbContext;
 
         public ManageController()
-            : this(new ApplicationDbContext(), null, null)
+            :this(new ApplicationDbContext(), null, null)
         {
         }
 
@@ -124,8 +124,8 @@ namespace BankingApp.Controllers
                 .Where(c => c.AssociatedBankAccount.Holder == userId)
                 .ToListAsync();
             var transactions = await _dbContext.TransactionRecords
-                    .Where(t => t.Sender == userId || t.Recipient == userId)
-                    .ToListAsync();
+                .Where(t => t.Sender == userId || t.Recipient == userId)
+                .ToListAsync();
 
             if (TempData.ContainsKey("Message"))
             {
@@ -219,7 +219,7 @@ namespace BankingApp.Controllers
                 AccountType = model.AccountType
             };
 
-            var cooldownPeriod = TimeSpan.FromMinutes(30);  // The cooldown period in minutes.
+            var cooldownPeriod = TimeSpan.FromMinutes(1);  // The cooldown period in minutes.
 
             // Creating a cooldown timer to prevent creation abuse.
             if (lastAccountCreationTimestamp != default && DateTime.Now - lastAccountCreationTimestamp < cooldownPeriod)
@@ -261,7 +261,7 @@ namespace BankingApp.Controllers
                 .OrderByDescending(a => a.IssueDate)
                 .Select(a => a.IssueDate)
                 .FirstOrDefaultAsync();
-            var cooldownPeriod = TimeSpan.FromMinutes(30);  // The cooldown period in minutes.
+            var cooldownPeriod = TimeSpan.FromMinutes(1);  // The cooldown period in minutes.
 
             // Creating a cooldown timer to prevent creation abuse.
             if (lastCardCreationTimestamp != default && DateTime.Now - lastCardCreationTimestamp < cooldownPeriod)
@@ -359,6 +359,7 @@ namespace BankingApp.Controllers
                 Sender = sourceAccount.AccountID,
                 Recipient = destinationAccount.AccountID,
                 Amount = model.Amount,
+                Description = "Transfer",
                 TimeExecuted = DateTime.Now
             };
 
