@@ -180,7 +180,7 @@ namespace BankingApp.Controllers
                     string emailBody = $"Thank you for signing up for my fake banking website!<br/>Please confirm your account by clicking <a href=\"{callbackUrl}\">here</a>";
                     await UserManager.SendEmailAsync(user.Id, "Account Confirmation", emailBody);
 
-                    return RedirectToAction("Index", "Home");
+                    return RedirectToAction("EmailConfirmationSent", "Account");
                 }
                 AddErrors(result);
             }
@@ -189,7 +189,7 @@ namespace BankingApp.Controllers
             return View(model);
         }
 
-        //
+        // 
         // GET: /Account/ConfirmEmail
         [AllowAnonymous]
         public async Task<ActionResult> ConfirmEmail(int userId, string code)
@@ -200,6 +200,13 @@ namespace BankingApp.Controllers
             }
             var result = await UserManager.ConfirmEmailAsync(userId, code);
             return View(result.Succeeded ? "ConfirmEmail" : "Error");
+        }
+
+        // GET: /Account/EmailConfirmationSent
+        [AllowAnonymous]
+        public ActionResult EmailConfirmationSent()
+        {
+            return View();
         }
 
         //
@@ -219,7 +226,7 @@ namespace BankingApp.Controllers
         {
             if (ModelState.IsValid)
             {
-                var user = await UserManager.FindByNameAsync(model.Email);
+                var user = await UserManager.FindByEmailAsync(model.Email);
                 if (user == null || !(await UserManager.IsEmailConfirmedAsync(user.Id)))
                 {
                     // Don't reveal that the user does not exist or is not confirmed
@@ -265,7 +272,7 @@ namespace BankingApp.Controllers
             {
                 return View(model);
             }
-            var user = await UserManager.FindByNameAsync(model.Email);
+            var user = await UserManager.FindByEmailAsync(model.Email);
             if (user == null)
             {
                 // Don't reveal that the user does not exist

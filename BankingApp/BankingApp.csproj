@@ -310,6 +310,7 @@
     <Content Include="Views\Shared\_CreateCardPartial.cshtml" />
     <Content Include="Views\Shared\_TransferPartial.cshtml" />
     <Content Include="Views\Shared\_ViewTransfersPartial.cshtml" />
+    <Content Include="Views\Account\EmailConfirmationSent.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
