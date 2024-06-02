@@ -1,1 +1,5 @@
 # BankingApp
+This application uses ASP.Net Identity as the base framework with a few customizability-related actions, such as extended other tables to its original database schema and changing the User IDs from string types to integers.
+
+# Web.config-related note:
+Implemented an extended appsecrets.config file that will contain the sensitive information for email-related activities. To have this work locally for sending emails, add your own "AppSettingsSecrets.config" file with the valid information like host, username, port, etc. You can also rename the file to whatever you wish, but you must also change the referenced name in the web.config file. Otherwise, the email system will not work. Alternative methods of dependency injection are obviously possible, with things like .json files, but I chose this approach due to this project not being ASP.NET CORE. My approach was backed by this official Microsoft website documentation [guide](https://learn.microsoft.com/en-us/aspnet/core/security/app-secrets?view=aspnetcore-8.0&tabs=windows).
