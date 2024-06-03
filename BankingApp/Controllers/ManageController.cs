@@ -238,7 +238,7 @@ namespace BankingApp.Controllers
 
             if (!ModelState.IsValid)
             {
-                TempData["Message"] = "Invalid attempt, please try again.";
+                TempData["Message"] = "Invalid data used, please follow the rules and try again.";
                 return RedirectToAction("Index", indexModel);
             }
 
