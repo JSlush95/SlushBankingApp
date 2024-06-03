@@ -312,6 +312,7 @@
     <Content Include="Views\Shared\_ViewTransfersPartial.cshtml" />
     <Content Include="Views\Account\EmailConfirmationSent.cshtml" />
     <Content Include="Views\Manage\ChangeUsername.cshtml" />
+    <Content Include="Views\Manage\ChangeEmail.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

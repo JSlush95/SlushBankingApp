@@ -94,6 +94,7 @@ namespace BankingApp.Controllers
             ViewBag.StatusMessage =
                 message == ManageMessageId.ChangePasswordSuccess ? "Your password has been changed."
                 : message == ManageMessageId.ChangeUsernameSuccess ? "Your username has been changed."
+                : message == ManageMessageId.ChangeEmailSuccess ? "Your email has been changed."
                 : message == ManageMessageId.SetPasswordSuccess ? "Your password has been set."
                 : message == ManageMessageId.SetTwoFactorSuccess ? "Your two-factor authentication provider has been set."
                 : message == ManageMessageId.Error ? "An error has occurred."
@@ -186,7 +187,7 @@ namespace BankingApp.Controllers
             var indexModel = await CreateIndexViewModel();
             if (!ModelState.IsValid)
             {
-                TempData["Message"] = "Invalid input, try again with valid data.";
+                TempData["Message"] = "Invalid attempt, please try again.";
                 return RedirectToAction("Index", indexModel);
             }
             
@@ -237,7 +238,7 @@ namespace BankingApp.Controllers
 
             if (!ModelState.IsValid)
             {
-                TempData["Message"] = "Invalid input data, please try again with valid input.";
+                TempData["Message"] = "Invalid attempt, please try again.";
                 return RedirectToAction("Index", indexModel);
             }
 
@@ -311,7 +312,7 @@ namespace BankingApp.Controllers
 
             if (!ModelState.IsValid)
             {
-                TempData["Message"] = "Error with the input data, try again with valid values.";
+                TempData["Message"] = "Invalid data used, please follow the rules and try again.";
                 return RedirectToAction("Index", indexModel);
             }
 
@@ -468,6 +469,47 @@ namespace BankingApp.Controllers
                 await SignInManager.SignInAsync(user, isPersistent: false, rememberBrowser: false);
             }
             return RedirectToAction("Index", new { Message = ManageMessageId.RemovePhoneSuccess });
+        }
+
+        // GET: /Manage/ChangeEmail
+        public ActionResult ChangeEmail()
+        {
+            return View();
+        }
+
+        // POST: /Manage/ChangeEmail
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> ChangeEmail(ChangeEmailViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+            var user = await UserManager.FindByIdAsync(GetCurrentUserId());
+
+            if (user.Email.ToLowerInvariant() != model.OldEmail.ToLowerInvariant())   // ASP.NET Identity uses case-sensitivity with its fields for its DBContext and management, lower case the conditions.
+            {
+                ModelState.AddModelError(string.Empty, "Old email doesn't match the current one.");
+                return View(model);
+            }
+
+            user.Email = model.NewEmail;
+            var result = await UserManager.UpdateAsync(user);
+
+            if (result.Succeeded)
+            {
+                await SignInManager.SignInAsync(user, isPersistent: false, rememberBrowser: false);
+                return RedirectToAction("Index", new { Message = ManageMessageId.ChangeEmailSuccess });
+            }
+            else
+            {
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error);
+                }
+            }
+            return View(model);
         }
 
         // GET: /Manage/ChangeUsername
@@ -686,6 +728,7 @@ namespace BankingApp.Controllers
             AddPhoneSuccess,
             ChangePasswordSuccess,
             ChangeUsernameSuccess,
+            ChangeEmailSuccess,
             SetTwoFactorSuccess,
             SetPasswordSuccess,
             RemoveLoginSuccess,

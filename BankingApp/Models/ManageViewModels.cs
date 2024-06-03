@@ -46,6 +46,22 @@ namespace BankingApp.Models
         public string ConfirmPassword { get; set; }
     }
 
+    public class ChangeEmailViewModel
+    {
+        [Required]
+        [Display(Name = "Current email")]
+        public string OldEmail { get; set; }
+
+        [Required]
+        [EmailAddress(ErrorMessage = "The {0} field is not a valid email address.")]
+        [Display(Name = "New email")]
+        public string NewEmail { get; set; }
+
+        [Display(Name = "Confirm new email")]
+        [System.ComponentModel.DataAnnotations.Compare("NewEmail", ErrorMessage = "The new email and confirmation email do not match.")]
+        public string ConfirmEmail { get; set; }
+    }
+
     public class ChangeUsernameViewModel
     {
         [Required]

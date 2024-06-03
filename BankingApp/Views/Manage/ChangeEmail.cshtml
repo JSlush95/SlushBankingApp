@@ -1,34 +1,35 @@
-﻿@model BankingApp.Models.ChangeUsernameViewModel
+﻿
+@model BankingApp.Models.ChangeEmailViewModel
 @{
-    ViewBag.Title = "Change Username";
+    ViewBag.Title = "Change Email";
 }
 
 <main aria-labelledby="title">
     <h2 id="title">@ViewBag.Title</h2>
 
-    @using (Html.BeginForm("ChangeUsername", "Manage", FormMethod.Post, new { role = "form" }))
+    @using (Html.BeginForm("ChangeEmail", "Manage", FormMethod.Post, new { role = "form" }))
     {
         @Html.AntiForgeryToken()
         <hr />
         @Html.ValidationSummary("", new { @class = "text-danger" })
         <div class="row">
-            @Html.LabelFor(m => m.OldUsername, new { @class = "col-md-2 col-form-label" })
+            @Html.LabelFor(m => m.OldEmail, new { @class = "col-md-2 col-form-label" })
             <div class="col-md-10">
-                @Html.TextBoxFor(m => m.OldUsername, new { @class = "form-control" })
+                @Html.TextBoxFor(m => m.OldEmail, new { @class = "form-control" })
             </div>
         </div>
         <br />
         <div class="row">
-            @Html.LabelFor(m => m.NewUsername, new { @class = "col-md-2 col-form-label" })
+            @Html.LabelFor(m => m.NewEmail, new { @class = "col-md-2 col-form-label" })
             <div class="col-md-10">
-                @Html.TextBoxFor(m => m.NewUsername, new { @class = "form-control" })
+                @Html.TextBoxFor(m => m.NewEmail, new { @class = "form-control" })
             </div>
         </div>
         <br />
         <div class="row">
-            @Html.LabelFor(m => m.ConfirmUsername, new { @class = "col-md-2 col-form-label" })
+            @Html.LabelFor(m => m.ConfirmEmail, new { @class = "col-md-2 col-form-label" })
             <div class="col-md-10">
-                @Html.TextBoxFor(m => m.ConfirmUsername, new { @class = "form-control" })
+                @Html.TextBoxFor(m => m.ConfirmEmail, new { @class = "form-control" })
             </div>
         </div>
         <br />
@@ -42,8 +43,8 @@
     <div class="entry-content">
         <strong>Rules:</strong>
         <ul>
-            <li>Usernames must be alphanumeric. </li>
-            <li>Usernames must be at least a length of 6.</li>
+            <li>Current email must be correct.</li>
+            <li>Email must be in a valid form.</li>
         </ul>
     </div>
 </main>
