@@ -43,6 +43,7 @@ namespace BankingApp
             var mail =
                 new System.Net.Mail.MailMessage(sentFrom, message.Destination);
 
+            mail.IsBodyHtml = true;
             mail.Subject = message.Subject;
             mail.Body = message.Body;
 

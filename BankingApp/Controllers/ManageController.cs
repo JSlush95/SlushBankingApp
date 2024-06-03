@@ -187,7 +187,7 @@ namespace BankingApp.Controllers
             var indexModel = await CreateIndexViewModel();
             if (!ModelState.IsValid)
             {
-                TempData["Message"] = "Invalid attempt, please try again.";
+                TempData["Message"] = "Invalid data used when creating a new bank account, please follow the rules and try again.";
                 return RedirectToAction("Index", indexModel);
             }
             
@@ -238,7 +238,7 @@ namespace BankingApp.Controllers
 
             if (!ModelState.IsValid)
             {
-                TempData["Message"] = "Invalid data used, please follow the rules and try again.";
+                TempData["Message"] = "Invalid data used when creating a new card, please follow the rules and try again.";
                 return RedirectToAction("Index", indexModel);
             }
 
