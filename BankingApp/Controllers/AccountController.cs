@@ -99,7 +99,7 @@ namespace BankingApp.Controllers
 
         //
         // GET: /Account/VerifyCode
-        //[AllowAnonymous]
+        [AllowAnonymous]
         public async Task<ActionResult> VerifyCode(string provider, string returnUrl, bool rememberMe)
         {
             // Require that the user has already logged in via username/password or external login
@@ -113,7 +113,7 @@ namespace BankingApp.Controllers
         //
         // POST: /Account/VerifyCode
         [HttpPost]
-        //[AllowAnonymous]
+        [AllowAnonymous]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> VerifyCode(VerifyCodeViewModel model)
         {
@@ -308,7 +308,7 @@ namespace BankingApp.Controllers
 
         //
         // GET: /Account/SendCode
-        //[AllowAnonymous]
+        [AllowAnonymous]
         public async Task<ActionResult> SendCode(string returnUrl, bool rememberMe)
         {
             var userId = await SignInManager.GetVerifiedUserIdAsync();
@@ -324,7 +324,7 @@ namespace BankingApp.Controllers
         //
         // POST: /Account/SendCode
         [HttpPost]
-        //[AllowAnonymous]
+        [AllowAnonymous]
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> SendCode(SendCodeViewModel model)
         {

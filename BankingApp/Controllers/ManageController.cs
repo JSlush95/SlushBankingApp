@@ -31,21 +31,6 @@ namespace BankingApp.Controllers
             SignInManager = signInManager;
         }
 
-        /*public ManageController(): this(new ApplicationDbContext())
-        {
-        }
-
-        public ManageController(ApplicationDbContext context)
-        {
-            _context = context;
-        }
-
-        public ManageController(ApplicationUserManager userManager, ApplicationSignInManager signInManager)
-        {
-            UserManager = userManager;
-            SignInManager = signInManager;
-        }*/
-
         public ApplicationDbContext ContextDbManager
         {
             get
@@ -108,6 +93,7 @@ namespace BankingApp.Controllers
         {
             ViewBag.StatusMessage =
                 message == ManageMessageId.ChangePasswordSuccess ? "Your password has been changed."
+                : message == ManageMessageId.ChangeUsernameSuccess ? "Your username has been changed."
                 : message == ManageMessageId.SetPasswordSuccess ? "Your password has been set."
                 : message == ManageMessageId.SetTwoFactorSuccess ? "Your two-factor authentication provider has been set."
                 : message == ManageMessageId.Error ? "An error has occurred."
@@ -484,6 +470,47 @@ namespace BankingApp.Controllers
             return RedirectToAction("Index", new { Message = ManageMessageId.RemovePhoneSuccess });
         }
 
+        // GET: /Manage/ChangeUsername
+        public ActionResult ChangeUsername()
+        {
+            return View();
+        }
+
+        // POST: /Manage/ChangeUsername
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> ChangeUsername(ChangeUsernameViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+            var user = await UserManager.FindByIdAsync(GetCurrentUserId());
+
+            if (user.UserName != model.OldUsername)
+            {
+                ModelState.AddModelError(string.Empty, "Old username doesn't match the current one.");
+                return View(model);
+            }
+
+            user.UserName = model.NewUsername;
+            var result = await UserManager.UpdateAsync(user);
+
+            if (result.Succeeded)
+            {
+                await SignInManager.SignInAsync(user, isPersistent: false, rememberBrowser: false);
+                return RedirectToAction("Index", new { Message = ManageMessageId.ChangeUsernameSuccess });
+            }
+            else
+            {
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error);
+                }
+            }
+            return View(model);
+        }
+
         //
         // GET: /Manage/ChangePassword
         public ActionResult ChangePassword()
@@ -624,6 +651,16 @@ namespace BankingApp.Controllers
             }
         }
 
+        private bool HasUsername()
+        {
+            var user = UserManager.FindByName(User.Identity.Name);
+            if (user != null)
+            {
+                return user != null;
+            }
+            return false;
+        }
+
         private bool HasPassword()
         {
             var user = UserManager.FindById(GetCurrentUserId());
@@ -648,6 +685,7 @@ namespace BankingApp.Controllers
         {
             AddPhoneSuccess,
             ChangePasswordSuccess,
+            ChangeUsernameSuccess,
             SetTwoFactorSuccess,
             SetPasswordSuccess,
             RemoveLoginSuccess,

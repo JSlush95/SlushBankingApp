@@ -1,16 +1,16 @@
 ﻿@model BankingApp.Models.VerifyCodeViewModel
 @{
-    ViewBag.Title = "Verify";
+    ViewBag.Title = "Verify Code";
 }
 
 <main aria-labelledby="title">
-    <h2 id="title">@ViewBag.Title.</h2>
+    <h2 id="title">@ViewBag.Title</h2>
 
     @using (Html.BeginForm("VerifyCode", "Account", new { ReturnUrl = Model.ReturnUrl }, FormMethod.Post, new { role = "form" })) {
         @Html.AntiForgeryToken()
         @Html.Hidden("provider", @Model.Provider)
         @Html.Hidden("rememberMe", @Model.RememberMe)
-        <h4>Enter verification code</h4>
+        <mark>Enter verification code</mark>
         <hr />
         @Html.ValidationSummary("", new { @class = "text-danger" })
         <div class="row">

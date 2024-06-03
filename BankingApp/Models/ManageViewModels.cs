@@ -46,6 +46,22 @@ namespace BankingApp.Models
         public string ConfirmPassword { get; set; }
     }
 
+    public class ChangeUsernameViewModel
+    {
+        [Required]
+        [Display(Name = "Current username")]
+        public string OldUsername { get; set; }
+
+        [Required]
+        [StringLength(100, ErrorMessage = "The {0} must be at least {2} characters long.", MinimumLength = 6)]
+        [Display(Name = "New username")]
+        public string NewUsername { get; set; }
+
+        [Display(Name = "Confirm new username")]
+        [System.ComponentModel.DataAnnotations.Compare("NewUsername", ErrorMessage = "The new username and confirmation username do not match.")]
+        public string ConfirmUsername { get; set; }
+    }
+
     public class ChangePasswordViewModel
     {
         [Required]

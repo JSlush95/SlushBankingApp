@@ -1,0 +1,45 @@
+﻿@model BankingApp.Models.ChangeUsernameViewModel
+@{
+    ViewBag.Title = "Change Username";
+}
+
+<main aria-labelledby="title">
+    <h2 id="title">@ViewBag.Title</h2>
+
+    @using (Html.BeginForm("ChangeUsername", "Manage", FormMethod.Post, new { role = "form" }))
+    {
+        @Html.AntiForgeryToken()
+        <hr />
+        @Html.ValidationSummary("", new { @class = "text-danger" })
+        <div class="row">
+            @Html.LabelFor(m => m.OldUsername, new { @class = "col-md-2 col-form-label" })
+            <div class="col-md-10">
+                @Html.TextBoxFor(m => m.OldUsername, new { @class = "form-control" })
+            </div>
+        </div>
+        <br />
+        <div class="row">
+            @Html.LabelFor(m => m.NewUsername, new { @class = "col-md-2 col-form-label" })
+            <div class="col-md-10">
+                @Html.TextBoxFor(m => m.NewUsername, new { @class = "form-control" })
+            </div>
+        </div>
+        <br />
+        <div class="row">
+            @Html.LabelFor(m => m.ConfirmUsername, new { @class = "col-md-2 col-form-label" })
+            <div class="col-md-10">
+                @Html.TextBoxFor(m => m.ConfirmUsername, new { @class = "form-control" })
+            </div>
+        </div>
+        <br />
+        <div class="row">
+            <div class="offset-md-2 col-md-10">
+                <input type="submit" value="Change" class="btn btn-outline-dark" />
+            </div>
+        </div>
+    }
+</main>
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+}
