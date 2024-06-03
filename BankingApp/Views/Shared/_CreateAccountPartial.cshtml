@@ -1,8 +1,7 @@
-﻿
-@model BankingApp.Models.CreateAccountViewModel
+﻿@model BankingApp.Models.CreateAccountViewModel
 <div>
+    <h3><u>Create Bank Account</u></h3>
     <br />
-    <h3>Create Bank Account</h3>
     @using (Html.BeginForm("CreateAccount", "Manage", FormMethod.Post))
     {
         @Html.AntiForgeryToken()
@@ -19,9 +18,8 @@
             @Html.ValidationMessageFor(m => m.Balance, "", new { @class = "text-danger" })
         </div>
         <br />
-        <button type="submit" class="btn btn-primary">Create Account</button>
-        <br />
-        <br />
+        <button type="submit" class="btn btn-light">Create Account</button>
+        <br /><br /><br />
         <div class="entry-content">
             <strong>Rules:</strong>
             <ul>

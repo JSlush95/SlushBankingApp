@@ -2,6 +2,9 @@
 @{
     ViewBag.Title = "Send Verification Code";
 }
+<head>
+    <link rel="stylesheet" type="text/css" href="~/css/global_background.css" />
+</head>
 
 <main aria-labelledby="title">
     <h2 id="title">@ViewBag.Title</h2>
@@ -15,7 +18,7 @@
                 Select Two-Factor Authentication Provider:
                 <br /><br />
                 @Html.DropDownListFor(model => model.SelectedProvider, Model.Providers)
-                <input type="submit" value="Submit" class="btn btn-outline-dark" />
+                <input type="submit" value="Submit" class="btn btn-light" />
             </div>
         </div>
         <br />

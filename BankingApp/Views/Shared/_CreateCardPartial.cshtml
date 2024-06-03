@@ -1,8 +1,7 @@
-﻿
-@model BankingApp.Models.CreateCardViewModel
+﻿@model BankingApp.Models.CreateCardViewModel
 <div>
+    <h3><u>Create a Card</u></h3>
     <br />
-    <h3>Create a Card</h3>
     @using (Html.BeginForm("CreateCard", "Manage", FormMethod.Post))
     {
         @Html.AntiForgeryToken()
@@ -22,9 +21,8 @@
             @Html.ValidationMessage("CooldownTimerError")
         </div>
         <br />
-        <button type="submit" class="btn btn-primary">Create Card</button>
-        <br />
-        <br />
+        <button type="submit" class="btn btn-light">Create Card</button>
+        <br /><br /><br />
         <div class="entry-content">
             <strong>Rules:</strong>
             <ul>

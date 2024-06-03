@@ -1,11 +1,10 @@
 ﻿@model BankingApp.Models.TransferFundsViewModel
 <div>
+    <h3><u>Transfer Funds</u></h3>
     <br />
-    <h3>Transfer Funds</h3>
     @using (Html.BeginForm("TransferFunds", "Manage", FormMethod.Post))
     {
         @Html.AntiForgeryToken()
-
         <div class="form-group">
             @Html.LabelFor(model => model.SourceAccountId, "Source Account", htmlAttributes: new { @class = "control-label col-md-2" })
             <div class="col-md-10">
@@ -32,11 +31,11 @@
         <br />
         <div class="form-group">
             <div class="col-md-offset-2 col-md-10">
-                <input type="submit" value="Transfer" class="btn btn-primary" />
+                <input type="submit" value="Transfer" class="btn btn-light" />
             </div>
         </div>
     }
-    <br />
+    <br /><br />
     <div class="entry-content">
         <strong>Rules:</strong>
         <ul>

@@ -1,0 +1,33 @@
+﻿body {
+    background: url(/images/triangles-bg-1.png);
+    background-repeat: no-repeat;
+    background-size: 100%;
+}
+
+html {
+    height: 100%;
+}
+
+*{
+    color: white;
+}
+
+select, .form-control {
+    color: black !important;    /* Obviously, these two must be opposite for readability (black clock with white background, vice versa) */
+    background-color: white !important; /* Pseudo-transparency color: rgba(0,0,0,0.5) */
+}
+
+select option {
+    color: black !important;
+    background-color: white !important;
+}
+
+.nav {
+    background-color: darkslategray;
+}
+
+.tab-content {
+    background-color: rgba(86,61,124,0.15);
+    border: 1px solid rgba(86,61,124,0.15);
+    padding: 2em;
+}

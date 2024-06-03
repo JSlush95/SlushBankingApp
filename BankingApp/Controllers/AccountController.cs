@@ -272,7 +272,7 @@ namespace BankingApp.Controllers
             {
                 return View(model);
             }
-            var user = await UserManager.FindByEmailAsync(model.Email);
+            var user = await UserManager.FindByNameAsync(model.Username);
             if (user == null)
             {
                 // Don't reveal that the user does not exist
