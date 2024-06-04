@@ -15,6 +15,7 @@ namespace BankingApp.Models
         public string PhoneNumber { get; set; }
         public bool TwoFactor { get; set; }
         public bool BrowserRemembered { get; set; }
+        public bool EmailConfirmed { get; set; }
         public CreateCardViewModel CreateCardViewModel { get; set; }
         public TransferFundsViewModel TransferFundsViewModel { get; set; }
         public DisplayAccountInfoViewModel DisplayAccountInfoViewModel { get; set; }

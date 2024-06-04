@@ -31,7 +31,17 @@
                 {
                     @Html.ActionLink("Create", "SetPassword")
                 }
-
+                @if (!Model.EmailConfirmed)
+                {
+                    <br /><br />
+                    <strong>Unconfirmed Account:</strong>
+                    <ul>
+                        <li>Cannot use the banking system until your account is confirmed.</li>
+                        <li>If the email provided does not work, change it above.</li>
+                        <li>@Html.ActionLink("Resend Confirmation Email", "ResendConfirmationEmail", "Account")</li>
+                    </ul>
+                    
+                }
             </dd>
             @*<dt>External Logins:</dt>
         <dd>
@@ -94,6 +104,7 @@
                     }
                 }
             </dd>
+            <br />
         </dl>
     </div>
     @if (ViewBag.Message != null)

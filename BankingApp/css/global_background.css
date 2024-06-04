@@ -32,7 +32,7 @@ select option {
     padding: 2em;
 }
 
-.text-danger.validation-summary-errors li{
+.text-danger.validation-summary-errors li, #Password-error, #Username-error{
     color: red;
 }
 

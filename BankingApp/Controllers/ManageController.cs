@@ -75,13 +75,15 @@ namespace BankingApp.Controllers
         private async Task<IndexViewModel> CreateIndexViewModel()
         {
             var userId = GetCurrentUserId();
+            var user = await UserManager.FindByIdAsync(userId);
             var indexModel = new IndexViewModel
             {
                 HasPassword = HasPassword(),
                 PhoneNumber = await UserManager.GetPhoneNumberAsync(userId),
                 TwoFactor = await UserManager.GetTwoFactorEnabledAsync(userId),
                 Logins = await UserManager.GetLoginsAsync(userId),
-                BrowserRemembered = await AuthenticationManager.TwoFactorBrowserRememberedAsync(User.Identity.GetUserId())
+                BrowserRemembered = await AuthenticationManager.TwoFactorBrowserRememberedAsync(User.Identity.GetUserId()),
+                EmailConfirmed = user.EmailConfirmed
             };
 
             return indexModel;
@@ -184,47 +186,56 @@ namespace BankingApp.Controllers
         public async Task<ActionResult> CreateAccount(CreateAccountViewModel model)
         {
             int userId = GetCurrentUserId();    // Must get the user's ID field for the LINQ functionality, as it cannot evaluate the function call directly.
+            var user = await UserManager.FindByIdAsync(userId);
             var indexModel = await CreateIndexViewModel();
             if (!ModelState.IsValid)
             {
                 TempData["Message"] = "Invalid data used when creating a new bank account, please follow the rules and try again.";
                 return RedirectToAction("Index", indexModel);
             }
-            
-            // Utilizing LINQ to query the last time this element was last created, as the anchor to prevent spam.
-            var lastAccountCreationTimestamp = await _dbContext.BankAccounts
-                .Where(a => a.Holder == userId)
-                .OrderByDescending(a => a.DateOpened)
-                .Select(a => a.DateOpened)
-                .FirstOrDefaultAsync();
 
-            var newAccount = new BankAccount
+            if (user.EmailConfirmed)
             {
-                Balance = model.Balance,
-                Holder = GetCurrentUserId(),
-                DateOpened = DateTime.Now,
-                AccountType = model.AccountType
-            };
+                // Utilizing LINQ to query the last time this element was last created, as the anchor to prevent spam.
+                var lastAccountCreationTimestamp = await _dbContext.BankAccounts
+                    .Where(a => a.Holder == userId)
+                    .OrderByDescending(a => a.DateOpened)
+                    .Select(a => a.DateOpened)
+                    .FirstOrDefaultAsync();
 
-            var cooldownPeriod = TimeSpan.FromMinutes(1);  // The cooldown period in minutes.
-
-            // Creating a cooldown timer to prevent creation abuse.
-            if (lastAccountCreationTimestamp != default && DateTime.Now - lastAccountCreationTimestamp < cooldownPeriod)
-            {
-                var timeElapsed = DateTime.Now - lastAccountCreationTimestamp;
-                var timeRemaining = cooldownPeriod - timeElapsed;
-
-                if (timeRemaining > TimeSpan.Zero)
+                var newAccount = new BankAccount
                 {
-                    TempData["Message"] = $"Please wait {timeRemaining} before creating a new account.";
-                    return RedirectToAction("Index", indexModel);
+                    Balance = model.Balance,
+                    Holder = GetCurrentUserId(),
+                    DateOpened = DateTime.Now,
+                    AccountType = model.AccountType
+                };
+
+                var cooldownPeriod = TimeSpan.FromMinutes(1);  // The cooldown period in minutes.
+
+                // Creating a cooldown timer to prevent creation abuse.
+                if (lastAccountCreationTimestamp != default && DateTime.Now - lastAccountCreationTimestamp < cooldownPeriod)
+                {
+                    var timeElapsed = DateTime.Now - lastAccountCreationTimestamp;
+                    var timeRemaining = cooldownPeriod - timeElapsed;
+
+                    if (timeRemaining > TimeSpan.Zero)
+                    {
+                        TempData["Message"] = $"Please wait {timeRemaining} before creating a new account.";
+                        return RedirectToAction("Index", indexModel);
+                    }
                 }
+
+                _dbContext.BankAccounts.Add(newAccount);
+                await _dbContext.SaveChangesAsync();
+
+                TempData["Message"] = "Success with creating a bank account.";
             }
-
-            _dbContext.BankAccounts.Add(newAccount);
-            await _dbContext.SaveChangesAsync();
-
-            TempData["Message"] = "Success with creating a bank account.";
+            else
+            {
+                TempData["Message"] = "Please confirm your email first.";
+            }
+            
             return RedirectToAction("Index", indexModel);
         }
 
@@ -233,45 +244,53 @@ namespace BankingApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> AddFunds(int accountID, decimal? amount)
         {
+            var user = await UserManager.FindByIdAsync(GetCurrentUserId());
             var indexModel = await CreateIndexViewModel();
             var account = await _dbContext.BankAccounts
                 .Where(a => a.AccountID == accountID)
                 .FirstOrDefaultAsync();
-
-            if (!amount.HasValue || amount <= 0)
+            
+            if (user.EmailConfirmed)
             {
-                TempData["Message"] = "Please enter a non-zero number amount.";
-            }
-            else if (account != null)
-            {
-                var transaction = new TransactionRecord()
+                if (!amount.HasValue || amount <= 0)
                 {
-                    Sender = accountID,
-                    Recipient = accountID,
-                    Amount = (decimal)amount,
-                    Description = "Deposit",
-                    TimeExecuted = DateTime.Now,
-                };
-
-                using (var transactionContext = _dbContext.Database.BeginTransaction()) // Using a transaction scope to handle more than one change.
-                {
-                    try
-                    {
-                        account.Balance += (decimal)amount;
-                        _dbContext.TransactionRecords.Add(transaction);
-
-                        await _dbContext.SaveChangesAsync();
-                        transactionContext.Commit();
-
-                        TempData["Message"] = $"Success with adding {amount} to the selected bank account.";
-                    }
-                    catch(Exception ex)
-                    {
-                        transactionContext.Rollback();
-                        TempData["Message"] = "Failed to add funds to the bank account.";
-                    }
-                    
+                    TempData["Message"] = "Please enter a non-zero number amount.";
                 }
+                else if (account != null)
+                {
+                    var transaction = new TransactionRecord()
+                    {
+                        Sender = accountID,
+                        Recipient = accountID,
+                        Amount = (decimal)amount,
+                        Description = "Deposit",
+                        TimeExecuted = DateTime.Now,
+                    };
+
+                    using (var transactionContext = _dbContext.Database.BeginTransaction()) // Using a transaction scope to handle more than one change.
+                    {
+                        try
+                        {
+                            account.Balance += (decimal)amount;
+                            _dbContext.TransactionRecords.Add(transaction);
+
+                            await _dbContext.SaveChangesAsync();
+                            transactionContext.Commit();
+
+                            TempData["Message"] = $"Success with adding {amount} to the selected bank account.";
+                        }
+                        catch (Exception ex)
+                        {
+                            transactionContext.Rollback();
+                            TempData["Message"] = "Failed to add funds to the bank account.";
+                        }
+
+                    }
+                }
+            }
+            else
+            {
+                TempData["Message"] = "Please confirm your email first.";
             }
 
             return RedirectToAction("Index", indexModel);
@@ -282,21 +301,30 @@ namespace BankingApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> RemoveAccount(int accountID)
         {
+            var user = await UserManager.FindByIdAsync(GetCurrentUserId());
             var indexModel = await CreateIndexViewModel();
             var account = await _dbContext.BankAccounts
                 .Where(a => a.AccountID == accountID)
                 .FirstOrDefaultAsync();
 
-            if(account != null)
+            if (user.EmailConfirmed)
             {
-                _dbContext.BankAccounts.Remove(account);    // Deferred execution for the query.
-                await _dbContext.SaveChangesAsync();
-                TempData["Message"] = "Success with deleting the bank account.";
+                if(account != null)
+                {
+                    _dbContext.BankAccounts.Remove(account);
+                    await _dbContext.SaveChangesAsync();
+                    TempData["Message"] = "Success with deleting the bank account.";
+                }
+                else
+                {
+                    TempData["Message"] = "Failed to delete the bank account.";
+                }
             }
             else
             {
-                TempData["Message"] = "Failed to delete the bank account.";
+                TempData["Message"] = "Please confirm your email first.";
             }
+            
             return RedirectToAction("index", indexModel);
         }
 
@@ -306,6 +334,7 @@ namespace BankingApp.Controllers
         public async Task<ActionResult> CreateCard(CreateCardViewModel model)
         {
             int userId = GetCurrentUserId();    // Must get the user's ID field for the LINQ functionality, as it cannot evaluate the function call directly.
+            var user = await UserManager.FindByIdAsync(userId);
             var indexModel = await CreateIndexViewModel();
 
             if (!ModelState.IsValid)
@@ -335,41 +364,49 @@ namespace BankingApp.Controllers
                 }
             }
 
-            string generatedCardNumber;
-            bool isUnique;
-            string getUniqueString(int stringLength)
+            if (user.EmailConfirmed)
             {
-                using (var rng = new System.Security.Cryptography.RNGCryptoServiceProvider())
+                string generatedCardNumber;
+                bool isUnique;
+                string getUniqueString(int stringLength)
                 {
-                    var bit_count = (stringLength * 6);
-                    var byte_count = ((bit_count + 7) / 8); // Round up
-                    var bytes = new byte[byte_count];
-                    rng.GetBytes(bytes);
-                    var base64String = Convert.ToBase64String(bytes);
-                    return base64String.Substring(0, stringLength);
+                    using (var rng = new System.Security.Cryptography.RNGCryptoServiceProvider())
+                    {
+                        var bit_count = (stringLength * 6);
+                        var byte_count = ((bit_count + 7) / 8); // Round up
+                        var bytes = new byte[byte_count];
+                        rng.GetBytes(bytes);
+                        var base64String = Convert.ToBase64String(bytes);
+                        return base64String.Substring(0, stringLength);
+                    }
                 }
+
+                // Checking whether this card number exists in the database, because it would break the system, since cards cannot share their unique usage code.
+                do
+                {
+                    generatedCardNumber = getUniqueString(11);  // Length - 1
+                    isUnique = !_dbContext.Cards.Any(c => c.CardNumber == generatedCardNumber);
+                }while(!isUnique && generatedCardNumber.Length != 11);
+
+                var newCard = new Card
+                {
+                    CardType = model.CardType,
+                    CardNumber = generatedCardNumber,
+                    AssociatedAccount = model.SelectedAccountID,
+                    IssueDate = DateTime.Now,
+                    Active = true
+                };
+
+                _dbContext.Cards.Add(newCard);
+                await _dbContext.SaveChangesAsync();
+
+                TempData["Message"] = "Success with creating a card.";
             }
-
-            // Checking whether this card number exists in the database, because it would break the system, since cards cannot share their unique usage code.
-            do
+            else
             {
-                generatedCardNumber = getUniqueString(11);  // Length - 1
-                isUnique = !_dbContext.Cards.Any(c => c.CardNumber == generatedCardNumber);
-            }while(!isUnique && generatedCardNumber.Length != 11);
-
-            var newCard = new Card
-            {
-                CardType = model.CardType,
-                CardNumber = generatedCardNumber,
-                AssociatedAccount = model.SelectedAccountID,
-                IssueDate = DateTime.Now,
-                Active = true
-            };
-
-            _dbContext.Cards.Add(newCard);
-            await _dbContext.SaveChangesAsync();
-
-            TempData["Message"] = "Success with creating a card.";
+                TempData["Message"] = "Please confirm your email first.";
+            }
+            
             return RedirectToAction("Index", indexModel);
         }
 
@@ -378,20 +415,28 @@ namespace BankingApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> RemoveCard(int cardID)
         {
+            var user = await UserManager.FindByIdAsync(GetCurrentUserId());
             var indexModel = await CreateIndexViewModel();
             var card = _dbContext.Cards
                 .Where(a => a.CardID == cardID)
                 .FirstOrDefault();
 
-            if (card != null)
+            if (user.EmailConfirmed)
             {
-                _dbContext.Cards.Remove(card);
-                await _dbContext.SaveChangesAsync();
-                TempData["Message"] = "Success with deleting the card.";
+                if (card != null)
+                {
+                    _dbContext.Cards.Remove(card);
+                    await _dbContext.SaveChangesAsync();
+                    TempData["Message"] = "Success with deleting the card.";
+                }
+                else
+                {
+                    TempData["Message"] = "Failed to delete the card.";
+                }
             }
             else
             {
-                TempData["Message"] = "Failed to delete the card.";
+                TempData["Message"] = "Please confirm your email first.";
             }
             
             return RedirectToAction("Index", indexModel);
@@ -402,6 +447,7 @@ namespace BankingApp.Controllers
         // POST: /Manage/TransferFunds
         public async Task<ActionResult> TransferFunds(TransferFundsViewModel model)
         {
+            var user = await UserManager.FindByIdAsync(GetCurrentUserId());
             var indexModel = await CreateIndexViewModel();
             var sourceAccount = await _dbContext.BankAccounts.FindAsync(model.SourceAccountId);
             var destinationAccount = await _dbContext.BankAccounts.FindAsync(model.DestinationAccountId);
@@ -412,44 +458,52 @@ namespace BankingApp.Controllers
                 return RedirectToAction("Index", indexModel);
             }
 
-            // Checking if both accounts exist and the source account has sufficient funds.
-            if (sourceAccount == null || destinationAccount == null)
+            if (user.EmailConfirmed)
             {
-                TempData["Message"] = "One or both of the bank accounts do not exist.";
-                //ModelState.AddModelError("", "One or both of the bank accounts do not exist.");
-                return RedirectToAction("Index", indexModel);
+                // Checking if both accounts exist and the source account has sufficient funds.
+                if (sourceAccount == null || destinationAccount == null)
+                {
+                    TempData["Message"] = "One or both of the bank accounts do not exist.";
+                    //ModelState.AddModelError("", "One or both of the bank accounts do not exist.");
+                    return RedirectToAction("Index", indexModel);
+                }
+
+                if (sourceAccount.AccountID == destinationAccount.AccountID)
+                {
+                    TempData["Message"] = "Please choose different accounts to transfer funds.";
+                    return RedirectToAction("Index", indexModel);
+                }
+
+                if (sourceAccount.Balance < model.Amount)
+                {
+                    // Handle the case where the source account does not have sufficient funds
+                    TempData["Message"] = "Insufficient funds in the source account.";
+                    //ModelState.AddModelError("", "Insufficient funds in the source account.");
+                    return RedirectToAction("Index", indexModel);
+                }
+
+                destinationAccount.Balance += model.Amount;
+                sourceAccount.Balance -= model.Amount;
+
+                TransactionRecord transactionRecord = new TransactionRecord()
+                {
+                    Sender = sourceAccount.AccountID,
+                    Recipient = destinationAccount.AccountID,
+                    Amount = model.Amount,
+                    Description = "Transfer",
+                    TimeExecuted = DateTime.Now
+                };
+
+                _dbContext.TransactionRecords.Add(transactionRecord);
+                await _dbContext.SaveChangesAsync();
+
+                TempData["Message"] = "Success with transfering the funds.";
             }
-
-            if (sourceAccount.AccountID == destinationAccount.AccountID)
+            else
             {
-                TempData["Message"] = "Please choose different accounts to transfer funds.";
-                return RedirectToAction("Index", indexModel);
+                TempData["Message"] = "Please confirm your email first.";
             }
-
-            if (sourceAccount.Balance < model.Amount)
-            {
-                // Handle the case where the source account does not have sufficient funds
-                TempData["Message"] = "Insufficient funds in the source account.";
-                //ModelState.AddModelError("", "Insufficient funds in the source account.");
-                return RedirectToAction("Index", indexModel);
-            }
-
-            destinationAccount.Balance += model.Amount;
-            sourceAccount.Balance -= model.Amount;
-
-            TransactionRecord transactionRecord = new TransactionRecord()
-            {
-                Sender = sourceAccount.AccountID,
-                Recipient = destinationAccount.AccountID,
-                Amount = model.Amount,
-                Description = "Transfer",
-                TimeExecuted = DateTime.Now
-            };
-
-            _dbContext.TransactionRecords.Add(transactionRecord);
-            await _dbContext.SaveChangesAsync();
-
-            TempData["Message"] = "Success with transfering the funds.";
+            
             return RedirectToAction("Index", indexModel);
         }
 

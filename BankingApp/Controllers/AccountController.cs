@@ -189,6 +189,22 @@ namespace BankingApp.Controllers
             return View(model);
         }
 
+        public async Task<ActionResult> ResendConfirmationEmail()
+        {
+            var user = await UserManager.FindByNameAsync(User.Identity.GetUserName());
+            if (user != null)
+            {
+                string code = await UserManager.GenerateEmailConfirmationTokenAsync(user.Id);
+                var callbackUrl = Url.Action("ConfirmEmail", "Account", new { userId = user.Id, code = code }, protocol: Request.Url.Scheme);
+                string emailBody = $"Thank you for signing up for my fake banking website!<br/>Please confirm your account by clicking <a href=\"{callbackUrl}\">here</a>";
+                await UserManager.SendEmailAsync(user.Id, "Account Confirmation", emailBody);
+
+                return RedirectToAction("EmailConfirmationSent", "Account");
+            }
+
+            return View("Error");
+        }
+
         // 
         // GET: /Account/ConfirmEmail
         [AllowAnonymous]
