@@ -111,7 +111,7 @@ namespace BankingApp.Controllers
                 .Where(c => c.AssociatedBankAccount.Holder == userId)
                 .ToListAsync();
             var transactions = await _dbContext.TransactionRecords
-                .Where(t => t.Sender == userId || t.Recipient == userId)
+                .Where(t => t.SenderAccount.Holder == userId || t.RecipientAccount.Holder == userId)
                 .ToListAsync();
 
             if (TempData.ContainsKey("Message"))
@@ -228,6 +228,78 @@ namespace BankingApp.Controllers
             return RedirectToAction("Index", indexModel);
         }
 
+        // POST: /Manage/AddFunds
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> AddFunds(int accountID, decimal? amount)
+        {
+            var indexModel = await CreateIndexViewModel();
+            var account = await _dbContext.BankAccounts
+                .Where(a => a.AccountID == accountID)
+                .FirstOrDefaultAsync();
+
+            if (!amount.HasValue || amount <= 0)
+            {
+                TempData["Message"] = "Please enter a non-zero number amount.";
+            }
+            else if (account != null)
+            {
+                var transaction = new TransactionRecord()
+                {
+                    Sender = accountID,
+                    Recipient = accountID,
+                    Amount = (decimal)amount,
+                    Description = "Deposit",
+                    TimeExecuted = DateTime.Now,
+                };
+
+                using (var transactionContext = _dbContext.Database.BeginTransaction()) // Using a transaction scope to handle more than one change.
+                {
+                    try
+                    {
+                        account.Balance += (decimal)amount;
+                        _dbContext.TransactionRecords.Add(transaction);
+
+                        await _dbContext.SaveChangesAsync();
+                        transactionContext.Commit();
+
+                        TempData["Message"] = $"Success with adding {amount} to the selected bank account.";
+                    }
+                    catch(Exception ex)
+                    {
+                        transactionContext.Rollback();
+                        TempData["Message"] = "Failed to add funds to the bank account.";
+                    }
+                    
+                }
+            }
+
+            return RedirectToAction("Index", indexModel);
+        }
+
+        // POST: /Manage/RemoveAccount
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> RemoveAccount(int accountID)
+        {
+            var indexModel = await CreateIndexViewModel();
+            var account = await _dbContext.BankAccounts
+                .Where(a => a.AccountID == accountID)
+                .FirstOrDefaultAsync();
+
+            if(account != null)
+            {
+                _dbContext.BankAccounts.Remove(account);    // Deferred execution for the query.
+                await _dbContext.SaveChangesAsync();
+                TempData["Message"] = "Success with deleting the bank account.";
+            }
+            else
+            {
+                TempData["Message"] = "Failed to delete the bank account.";
+            }
+            return RedirectToAction("index", indexModel);
+        }
+
         // POST: /Manage/CreateCard
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -298,6 +370,30 @@ namespace BankingApp.Controllers
             await _dbContext.SaveChangesAsync();
 
             TempData["Message"] = "Success with creating a card.";
+            return RedirectToAction("Index", indexModel);
+        }
+
+        // POST: /Manage/RemoveCard
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> RemoveCard(int cardID)
+        {
+            var indexModel = await CreateIndexViewModel();
+            var card = _dbContext.Cards
+                .Where(a => a.CardID == cardID)
+                .FirstOrDefault();
+
+            if (card != null)
+            {
+                _dbContext.Cards.Remove(card);
+                await _dbContext.SaveChangesAsync();
+                TempData["Message"] = "Success with deleting the card.";
+            }
+            else
+            {
+                TempData["Message"] = "Failed to delete the card.";
+            }
+            
             return RedirectToAction("Index", indexModel);
         }
 

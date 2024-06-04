@@ -127,6 +127,9 @@ namespace BankingApp.Models
     {
         public List<BankAccount> Accounts { get; set; }
         public List<Card> Cards { get; set; }
+
+        [Display(Name = "Amount")]
+        public decimal Amount { get; set; }
     }
 
     public class DisplayTransferInfoViewModel
