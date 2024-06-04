@@ -79,7 +79,7 @@
                     {
                         @Html.AntiForgeryToken()
                         <text><mark>Enabled</mark>
-                            <input type="submit" value="Disable" class="btn btn-link" />
+                            <input type="submit" value="Disable" class="btn btn-link" id="two-FA-link" />
                         </text>
                     }
                 }
@@ -89,7 +89,7 @@
                     {
                         @Html.AntiForgeryToken()
                         <text><mark>Disabled</mark>
-                            <input type="submit" value="Enable" class="btn btn-link" />
+                            <input type="submit" value="Enable" class="btn btn-link" id="two-FA-link"/>
                         </text>
                     }
                 }

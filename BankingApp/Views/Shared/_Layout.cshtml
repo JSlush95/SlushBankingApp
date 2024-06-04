@@ -6,9 +6,26 @@
     <title>@ViewBag.Title - Slush Banking</title>
     @Styles.Render("~/Content/css")
     @Scripts.Render("~/bundles/modernizr")
+    <style>
+        .navbar-nav .nav-link {
+            color: #9eff9e;
+        }
+
+        .navbar-nav .nav-link:hover {
+            color: gold;
+        }
+
+        .navbar-brand {
+            color: #9eff9e;
+        }
+
+        .navbar-brand:hover {
+            color: gold;
+        }
+    </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-sm navbar-toggleable-sm" style="background-color:darkcyan">
+    <nav class="navbar navbar-expand-sm navbar-toggleable-sm" style="background-color:darkslategray">
         <div class="container">
             
         @Html.ActionLink("Home", "Index", "Home", new { area = "" }, new { @class = "navbar-brand" })
