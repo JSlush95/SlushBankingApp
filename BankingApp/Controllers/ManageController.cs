@@ -497,7 +497,7 @@ namespace BankingApp.Controllers
                 _dbContext.TransactionRecords.Add(transactionRecord);
                 await _dbContext.SaveChangesAsync();
 
-                TempData["Message"] = "Success with transfering the funds.";
+                TempData["Message"] = "Success with transferring the funds.";
             }
             else
             {
