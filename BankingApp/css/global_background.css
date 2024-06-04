@@ -42,7 +42,7 @@ a {
 }
 
 a:hover {
-    color: gold;
+    color: #ffffcc;
 }
 
 #nav-tab .nav-link:not(.active) {
@@ -51,7 +51,7 @@ a:hover {
 }
 
 #nav-tab .nav-link:not(.active):hover {
-    color: gold;
+    color: #ffffcc;
 }
 
 #two-FA-link.btn.btn-link {
@@ -60,5 +60,5 @@ a:hover {
 }
 
 #two-FA-link.btn.btn-link:hover {
-    color: gold;
+    color: #ffffcc;
 }

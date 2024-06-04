@@ -50,7 +50,7 @@ namespace BankingApp.Models
     {
         [Required]
         [Display(Name = "Username")]
-        public string Email { get; set; }
+        public string Username { get; set; }
 
         [Required]
         [DataType(DataType.Password)]
