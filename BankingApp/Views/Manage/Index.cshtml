@@ -40,7 +40,7 @@
                         <li>If the email provided does not work, change it above.</li>
                         <li>@Html.ActionLink("Resend Confirmation Email", "ResendConfirmationEmail", "Account")</li>
                     </ul>
-                    
+
                 }
             </dd>
             @*<dt>External Logins:</dt>
@@ -140,27 +140,27 @@
         <div class="tab-content" id="nav-tabContent">
             <div class="tab-pane fade show active" id="view-accounts" role="tabpanel" aria-labelledby="nav-tab-view-accounts">
                 <div id="view-accounts-content">
-                    @Html.Partial("_ViewAccountsPartial", Model.DisplayAccountInfoViewModel)
+                    @{ Html.RenderPartial("_ViewAccountsPartial", Model.DisplayAccountInfoViewModel); }
                 </div>
             </div>
             <div class="tab-pane fade" id="transfer-funds" role="tabpanel" aria-labelledby="nav-tab-view-transfers">
                 <div id="view-transfers-content">
-                    @Html.Partial("_ViewTransfersPartial", Model.DisplayTransferInfoViewModel)
+                    @{ Html.RenderPartial("_ViewTransfersPartial", Model.DisplayTransferInfoViewModel); }
                 </div>
             </div>
             <div class="tab-pane fade" id="create-account" role="tabpanel" aria-labelledby="nav-tab-create-account">
                 <div id="create-account-content">
-                    @Html.Partial("_CreateAccountPartial", new BankingApp.Models.CreateAccountViewModel())
+                    @{ Html.RenderPartial("_CreateAccountPartial", new BankingApp.Models.CreateAccountViewModel()); }
                 </div>
             </div>
             <div class="tab-pane fade" id="create-card" role="tabpanel" aria-labelledby="nav-tab-create-card">
                 <div id="create-card-content">
-                    @Html.Partial("_CreateCardPartial", Model.CreateCardViewModel)
+                    @{ Html.RenderPartial("_CreateCardPartial", Model.CreateCardViewModel); }
                 </div>
             </div>
             <div class="tab-pane fade" id="transfer" role="tabpanel" aria-labelledby="nav-tab-transfer">
                 <div id="create-card-content">
-                    @Html.Partial("_TransferPartial", Model.TransferFundsViewModel)
+                    @{ Html.Partial("_TransferPartial", Model.TransferFundsViewModel); }
                 </div>
             </div>
         </div>
