@@ -160,7 +160,7 @@
             </div>
             <div class="tab-pane fade" id="transfer" role="tabpanel" aria-labelledby="nav-tab-transfer">
                 <div id="create-card-content">
-                    @{ Html.Partial("_TransferPartial", Model.TransferFundsViewModel); }
+                    @{ Html.RenderPartial("_TransferPartial", Model.TransferFundsViewModel); }
                 </div>
             </div>
         </div>

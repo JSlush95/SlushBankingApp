@@ -187,11 +187,11 @@ namespace BankingApp.Controllers
         {
             int userId = GetCurrentUserId();    // Must get the user's ID field for the LINQ functionality, as it cannot evaluate the function call directly.
             var user = await UserManager.FindByIdAsync(userId);
-            var indexModel = await CreateIndexViewModel();
+            
             if (!ModelState.IsValid)
             {
                 TempData["Message"] = "Invalid data used when creating a new bank account, please follow the rules and try again.";
-                return RedirectToAction("Index", indexModel);
+                return RedirectToAction("Index");
             }
 
             if (user.EmailConfirmed)
@@ -222,7 +222,7 @@ namespace BankingApp.Controllers
                     if (timeRemaining > TimeSpan.Zero)
                     {
                         TempData["Message"] = $"Please wait {timeRemaining} before creating a new account.";
-                        return RedirectToAction("Index", indexModel);
+                        return RedirectToAction("Index");
                     }
                 }
 
@@ -236,7 +236,7 @@ namespace BankingApp.Controllers
                 TempData["Message"] = "Please confirm your email first.";
             }
             
-            return RedirectToAction("Index", indexModel);
+            return RedirectToAction("Index");
         }
 
         // POST: /Manage/AddFunds
@@ -245,7 +245,6 @@ namespace BankingApp.Controllers
         public async Task<ActionResult> AddFunds(int accountID, decimal? amount)
         {
             var user = await UserManager.FindByIdAsync(GetCurrentUserId());
-            var indexModel = await CreateIndexViewModel();
             var account = await _dbContext.BankAccounts
                 .Where(a => a.AccountID == accountID)
                 .FirstOrDefaultAsync();
@@ -293,7 +292,7 @@ namespace BankingApp.Controllers
                 TempData["Message"] = "Please confirm your email first.";
             }
 
-            return RedirectToAction("Index", indexModel);
+            return RedirectToAction("Index");
         }
 
         // POST: /Manage/RemoveAccount
@@ -302,7 +301,6 @@ namespace BankingApp.Controllers
         public async Task<ActionResult> RemoveAccount(int accountID)
         {
             var user = await UserManager.FindByIdAsync(GetCurrentUserId());
-            var indexModel = await CreateIndexViewModel();
             var account = await _dbContext.BankAccounts
                 .Where(a => a.AccountID == accountID)
                 .FirstOrDefaultAsync();
@@ -325,7 +323,7 @@ namespace BankingApp.Controllers
                 TempData["Message"] = "Please confirm your email first.";
             }
             
-            return RedirectToAction("index", indexModel);
+            return RedirectToAction("index");
         }
 
         // POST: /Manage/CreateCard
@@ -335,12 +333,11 @@ namespace BankingApp.Controllers
         {
             int userId = GetCurrentUserId();    // Must get the user's ID field for the LINQ functionality, as it cannot evaluate the function call directly.
             var user = await UserManager.FindByIdAsync(userId);
-            var indexModel = await CreateIndexViewModel();
 
             if (!ModelState.IsValid)
             {
                 TempData["Message"] = "Invalid data used when creating a new card, please follow the rules and try again.";
-                return RedirectToAction("Index", indexModel);
+                return RedirectToAction("Index");
             }
 
             // Utilizing LINQ to query the last time this element was last created, as the anchor to prevent spam.
@@ -360,7 +357,7 @@ namespace BankingApp.Controllers
                 if (timeRemaining > TimeSpan.Zero)
                 {
                     TempData["Message"] = $"Please wait {timeRemaining} before creating a new card.";
-                    return RedirectToAction("Index", indexModel);
+                    return RedirectToAction("Index");
                 }
             }
 
@@ -407,7 +404,7 @@ namespace BankingApp.Controllers
                 TempData["Message"] = "Please confirm your email first.";
             }
             
-            return RedirectToAction("Index", indexModel);
+            return RedirectToAction("Index");
         }
 
         // POST: /Manage/RemoveCard
@@ -416,7 +413,6 @@ namespace BankingApp.Controllers
         public async Task<ActionResult> RemoveCard(int cardID)
         {
             var user = await UserManager.FindByIdAsync(GetCurrentUserId());
-            var indexModel = await CreateIndexViewModel();
             var card = _dbContext.Cards
                 .Where(a => a.CardID == cardID)
                 .FirstOrDefault();
@@ -439,7 +435,7 @@ namespace BankingApp.Controllers
                 TempData["Message"] = "Please confirm your email first.";
             }
             
-            return RedirectToAction("Index", indexModel);
+            return RedirectToAction("Index");
         }
 
         [HttpPost]
@@ -448,14 +444,13 @@ namespace BankingApp.Controllers
         public async Task<ActionResult> TransferFunds(TransferFundsViewModel model)
         {
             var user = await UserManager.FindByIdAsync(GetCurrentUserId());
-            var indexModel = await CreateIndexViewModel();
             var sourceAccount = await _dbContext.BankAccounts.FindAsync(model.SourceAccountId);
             var destinationAccount = await _dbContext.BankAccounts.FindAsync(model.DestinationAccountId);
 
             if (!ModelState.IsValid)
             {
                 TempData["Message"] = "Invalid data used for transferring, please follow the rules and try again.";
-                return RedirectToAction("Index", indexModel);
+                return RedirectToAction("Index");
             }
 
             if (user.EmailConfirmed)
@@ -465,13 +460,13 @@ namespace BankingApp.Controllers
                 {
                     TempData["Message"] = "One or both of the bank accounts do not exist.";
                     //ModelState.AddModelError("", "One or both of the bank accounts do not exist.");
-                    return RedirectToAction("Index", indexModel);
+                    return RedirectToAction("Index");
                 }
 
                 if (sourceAccount.AccountID == destinationAccount.AccountID)
                 {
                     TempData["Message"] = "Please choose different accounts to transfer funds.";
-                    return RedirectToAction("Index", indexModel);
+                    return RedirectToAction("Index");
                 }
 
                 if (sourceAccount.Balance < model.Amount)
@@ -479,7 +474,7 @@ namespace BankingApp.Controllers
                     // Handle the case where the source account does not have sufficient funds
                     TempData["Message"] = "Insufficient funds in the source account.";
                     //ModelState.AddModelError("", "Insufficient funds in the source account.");
-                    return RedirectToAction("Index", indexModel);
+                    return RedirectToAction("Index");
                 }
 
                 destinationAccount.Balance += model.Amount;
@@ -504,7 +499,7 @@ namespace BankingApp.Controllers
                 TempData["Message"] = "Please confirm your email first.";
             }
             
-            return RedirectToAction("Index", indexModel);
+            return RedirectToAction("Index");
         }
 
         //
