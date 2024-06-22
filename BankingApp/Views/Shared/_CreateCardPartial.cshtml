@@ -6,19 +6,28 @@
     {
         @Html.AntiForgeryToken()
         @Html.ValidationSummary(true, "", new { @class = "text-danger" })
-
         <div class="form-group">
             @Html.LabelFor(m => m.SelectedAccountID, new { @class = "col-md-2 col-form-label" })
             @Html.DropDownListFor(m => m.SelectedAccountID, Model.BankAccounts, "Select Account", new { @class = "form-control" })
             @Html.ValidationMessageFor(m => m.SelectedAccountID, "", new { @class = "text-danger" })
         </div>
-
+        <br />
+        <div class="form-group">
+            @Html.LabelFor(m => m.KeyID, new { @class = "col-md-2 col-form-label" })
+            @Html.TextBoxFor(m => m.KeyID, new { @class = "form-control" })
+            @Html.ValidationMessageFor(m => m.KeyID, "", new { @class = "text-danger" })
+        </div>
         <br />
         <div class="form-group">
             @Html.LabelFor(m => m.CardType, new { @class = "col-md-2 col-form-label" })
-            @Html.EnumDropDownListFor(m => m.CardType, "Select Type", new { @class = "form-control" })
+            @{
+                var cardTypes = Enum.GetValues(typeof(BankingApp.Models.CardType))
+                                   .Cast<BankingApp.Models.CardType>()
+                                   .Where(e => e == BankingApp.Models.CardType.Debit);
+                var selectList = new SelectList(cardTypes);
+            }
+            @Html.DropDownListFor(m => m.CardType, selectList, new { @class = "form-control" })
             @Html.ValidationMessageFor(m => m.CardType, "", new { @class = "text-danger" })
-            @Html.ValidationMessage("CooldownTimerError")
         </div>
         <br />
         <button type="submit" class="btn btn-light">Create Card</button>
@@ -27,6 +36,7 @@
             <strong>Rules:</strong>
             <ul>
                 <li>If there are no accounts, nothing is selectable.</li>
+                <li>The KeyID must be a non-decimal, non-negative number with 5 digits (example: 12345). This is used to validate purchases from the companion store website.</li>
                 <li>An account must be selected.</li>
             </ul>
         </div>

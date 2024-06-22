@@ -38,11 +38,60 @@
                     <ul>
                         <li>Cannot use the banking system until your account is confirmed.</li>
                         <li>If the email provided does not work, change it above.</li>
-                        <li>@Html.ActionLink("Resend Confirmation Email", "ResendConfirmationEmail", "Account")</li>
+                        <li>Confirmed accounts are required to use the "forgot password" feature.</li>
                     </ul>
-
+                    using (Html.BeginForm("ResendConfirmationEmail", "Account", FormMethod.Post, new { role = "form" }))
+                    {
+                        @Html.AntiForgeryToken()
+                        @Html.ValidationSummary("", new { @class = "text-danger" })
+                        <div class="row justify-content-start">
+                            <div class="col-auto">
+                                <input type="submit" value="Resend Confirmation Email" class="btn btn-light" />
+                            </div>
+                        </div>
+                    }
+                    <br />
                 }
             </dd>
+            <br />
+            <div class="container-md">
+                @if (!Model.AccountAliasSet)
+                {
+                    <strong>Account Alias Not Set:</strong>
+                    <ul>
+                        <li>An account alias is required to connect to the companion store website.</li>
+                        <li>The account alias must match the one used in the companion store website.</li>
+                        <li>The account alias must not be in use already.</li>
+                    </ul>
+                    using (Html.BeginForm("SetAccountAlias", "Manage", FormMethod.Post, new { role = "form" }))
+                    {
+                        @Html.AntiForgeryToken()
+                        @Html.ValidationSummary("", new { @class = "text-danger" })
+                        <div class="row">
+                            @Html.LabelFor(m => m.AliasFormInput, new { @class = "col-md-2 col-form-label" })
+                            <div class="col-md-10">
+                                @Html.TextBoxFor(m => m.AliasFormInput, new { @class = "form-control" })
+                            </div>
+                        </div>
+                        <br />
+                        <div class="row">
+                            <div class="offset-md-2 col-md-10">
+                                <input type="submit" value="Set Alias" class="btn btn-light" />
+                            </div>
+                        </div>
+                    }
+                    <br />
+                    <br />
+                }
+                else
+                {
+                    <details>
+                        <summary>Account Alias:</summary>
+                        @Model.AccountAlias
+                    </details>
+                }
+            </div>
+            <br />
             @*<dt>External Logins:</dt>
         <dd>
             @Model.Logins.Count [
@@ -99,7 +148,7 @@
                     {
                         @Html.AntiForgeryToken()
                         <text><mark>Disabled</mark>
-                            <input type="submit" value="Enable" class="btn btn-link" id="two-FA-link"/>
+                            <input type="submit" value="Enable" class="btn btn-link" id="two-FA-link" />
                         </text>
                     }
                 }

@@ -163,9 +163,17 @@ namespace BankingApp.Controllers
         {
             if (ModelState.IsValid)
             {
+                var existingUser = await UserManager.FindByEmailAsync(model.Email);
+                if (existingUser != null)
+                {
+                    ModelState.AddModelError("Email", "The email is already in use.");
+                    return View(model);
+                }
+
                 var user = new User { 
                     UserName = model.Username, 
                     Email = model.Email,
+                    UserType = model.UserType,
                     JoinDate = DateTime.Now
                 };
                 var result = await UserManager.CreateAsync(user, model.Password);
@@ -191,6 +199,7 @@ namespace BankingApp.Controllers
 
         public async Task<ActionResult> ResendConfirmationEmail()
         {
+            // Async Exception?
             var user = await UserManager.FindByNameAsync(User.Identity.GetUserName());
             if (user != null)
             {

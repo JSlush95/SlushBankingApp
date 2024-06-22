@@ -18,6 +18,9 @@ namespace BankingApp.Models
         [StringLength(11)]
         public string CardNumber { get; set; }
         [Required]
+        [Range(10000, 99999)]
+        public int KeyID { get; set; }
+        [Required]
         public int AssociatedAccount { get; set; }
         [Required]
         public DateTime IssueDate { get; set; }
@@ -30,7 +33,7 @@ namespace BankingApp.Models
 
     public enum CardType
     {
-        //Credit,
+        Credit,
         Debit
     }
 }

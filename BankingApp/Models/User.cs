@@ -19,6 +19,10 @@ namespace BankingApp.Models
         public string FirstName { get; set; }
         [MaxLength(256)]
         public string LastName { get; set; }
+        [MaxLength(256)]
+        public string Alias { get; set; }
+        [Required]
+        public UserType UserType { get; set; }
         [Required]
         public DateTime JoinDate { get; set; }
 
@@ -29,6 +33,12 @@ namespace BankingApp.Models
             // Add custom user claims here
             return userIdentity;
         }
+    }
+
+    public enum UserType
+    {
+        Personal,
+        Business
     }
     
      /* 

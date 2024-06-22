@@ -115,10 +115,19 @@ namespace BankingApp.Controllers
             var transactions = await _dbContext.TransactionRecords
                 .Where(t => t.SenderAccount.Holder == userId || t.RecipientAccount.Holder == userId)
                 .ToListAsync();
+            var account = _dbContext.Users
+                .Where(u => u.Id == userId);
+                
+            var accountType = await account
+                .Select(u => u.UserType)
+                .FirstOrDefaultAsync();
+            var accountAlias = await account
+                .Select(u => u.Alias)
+                .FirstOrDefaultAsync();
 
             if (TempData.ContainsKey("Message"))
             {
-                ViewBag.Message = TempData["Message"].ToString();
+                ViewBag.Message = TempData["Message"];
             }
 
             var model = await CreateIndexViewModel();
@@ -152,6 +161,9 @@ namespace BankingApp.Controllers
             {
                 Transactions = transactions
             };
+            model.AccountType = accountType;
+            model.AccountAliasSet = (string.IsNullOrWhiteSpace(accountAlias))? false: true;
+            model.AccountAlias = accountAlias;
 
             return View(model);
         }
@@ -178,6 +190,43 @@ namespace BankingApp.Controllers
                 message = ManageMessageId.Error;
             }
             return RedirectToAction("ManageLogins", new { Message = message });
+        }
+
+        // POST: /Manage/SetAccountAlias
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> SetAccountAlias(string aliasFormInput)
+        {
+            int userId = GetCurrentUserId();    // Must get the user's ID field for the LINQ functionality, as it cannot evaluate the function call directly.
+            var user = await UserManager.FindByIdAsync(userId);
+            string aliasName = aliasFormInput;
+            var existingUser = await _dbContext.Users
+                .Where(u => u.Alias == aliasName)
+                .FirstOrDefaultAsync();
+
+            // Alias must be unique, since it used for the store's payment API call.
+            if (existingUser != null)
+            {
+                TempData["Message"] = "Alias already exists, choose another.";
+                return RedirectToAction("Index");
+            }
+
+            if (user != null)
+            {
+                user.Alias = aliasName;
+                var result = await UserManager.UpdateAsync(user);
+
+                if (result.Succeeded)
+                {
+                    TempData["Message"] = "Successfully set alias.";
+                }
+                else
+                {
+                    TempData["Message"] = "Failed to set alias.";
+                }
+            }
+
+            return RedirectToAction("Index");
         }
 
         // POST: /Manage/CreateAccount
@@ -389,6 +438,7 @@ namespace BankingApp.Controllers
                 {
                     CardType = model.CardType,
                     CardNumber = generatedCardNumber,
+                    KeyID = model.KeyID,
                     AssociatedAccount = model.SelectedAccountID,
                     IssueDate = DateTime.Now,
                     Active = true

@@ -1,0 +1,56 @@
+﻿using BankingApp.Utilities;
+using System;
+using System.Collections.Generic;
+using System.Configuration;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
+using System.Web;
+
+namespace BankingApp.Models
+{
+    public class Cryptography
+    {
+        private readonly string _privateKey;
+
+        public Cryptography()
+        {
+            _privateKey = ConfigurationManager.AppSettings["PrivateKey"];
+        }
+
+        public int DecryptID(string encryptedID)
+        {
+            try
+            {
+                using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
+                {
+                    rsa.FromXmlString(_privateKey);
+
+                    // Converting the encrypted key ID from base64 string to bytes.
+                    var encryptedBytesID = Convert.FromBase64String(encryptedID);
+
+                    // Decrypting the bytes.
+                    var decryptedBytesID = rsa.Decrypt(encryptedBytesID, RSAEncryptionPadding.Pkcs1);
+                    var decryptedID = Int32.Parse(Encoding.UTF8.GetString(decryptedBytesID));
+
+                    return decryptedID;
+                }
+            }
+            catch (FormatException ex)
+            {
+                Log.Error("Invalid format while decrypting ID.", ex);
+                throw new CryptographicException("Invalid format while decrypting ID.", ex);
+            }
+            catch (CryptographicException ex)
+            {
+                Log.Error("Cryptographic exception occurred while decrypting ID.", ex);
+                throw new CryptographicException("Cryptographic exception occurred while decrypting ID.", ex);
+            }
+            catch (Exception ex)
+            {
+                Log.Error("An error occurred while decrypting ID.", ex);
+                throw new CryptographicException("An error occurred while decrypting ID.", ex);
+            }
+        }
+    }
+}

@@ -16,6 +16,12 @@ namespace BankingApp.Models
         public bool TwoFactor { get; set; }
         public bool BrowserRemembered { get; set; }
         public bool EmailConfirmed { get; set; }
+        public UserType AccountType {  get; set; }
+        public string AccountAlias { get; set; }
+        [Required]
+        [Display(Name = "Alias Name")]
+        public string AliasFormInput { get; set; }
+        public bool AccountAliasSet { get; set; }
         public CreateCardViewModel CreateCardViewModel { get; set; }
         public TransferFundsViewModel TransferFundsViewModel { get; set; }
         public DisplayAccountInfoViewModel DisplayAccountInfoViewModel { get; set; }
@@ -155,6 +161,11 @@ namespace BankingApp.Models
         [Required(ErrorMessage = "Please select an account")]
         [Display(Name = "Bank Account ID")]
         public int SelectedAccountID { get; set; }
+
+        [Required(ErrorMessage = "Please select a valid non-decimal, non-negative number with 5 digits.")]
+        [Display(Name = "Key ID")]
+        [Range(10000, 99999, ErrorMessage = "Value must be a 5 digit number.")]
+        public int KeyID { get; set; }
 
         [Required(ErrorMessage = "Please select a card type")]
         [Display(Name = "Card Type")]

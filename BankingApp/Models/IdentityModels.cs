@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Data.Entity;
 using System.Diagnostics;
+using System.Reflection;
 using System.Security.Claims;
+using System.Security.Principal;
 using System.Threading.Tasks;
 using Microsoft.AspNet.Identity.EntityFramework;
 
@@ -44,7 +46,11 @@ namespace BankingApp.Models
                 .HasRequired(tr => tr.RecipientAccount)
                 .WithMany()
                 .HasForeignKey(tr => tr.Recipient)
-                .WillCascadeOnDelete(false);
+            .WillCascadeOnDelete(false);
+
+            modelBuilder.Entity<User>()
+                .HasIndex(account => account.Email)
+                .IsUnique();
         }
 
         public static ApplicationDbContext Create()

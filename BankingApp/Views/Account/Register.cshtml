@@ -43,6 +43,19 @@
         </div>
         <br />
         <div class="row">
+            @Html.LabelFor(m => m.UserType, new { @class = "col-md-2 col-form-label" })
+            <div class="col-md-10">
+                @{
+                    var userTypes = Enum.GetValues(typeof(BankingApp.Models.UserType))
+                                       .Cast<BankingApp.Models.UserType>()
+                                       .Where(e => e == BankingApp.Models.UserType.Personal);
+                    var selectList = new SelectList(userTypes);
+                }
+                @Html.DropDownListFor(m => m.UserType, selectList, new { @class = "form-control" })
+            </div>
+        </div>
+        <br />
+        <div class="row">
             <div class="offset-md-2 col-md-10">
                 <input type="submit" value="Register" class="btn btn-light" />
             </div>
@@ -51,7 +64,7 @@
         <div class="entry-content">
             <strong>Rules:</strong>
             <ul>
-                <li>Email must be in a valid form.</li>
+                <li>Email must be in a valid form. It must not be in use already.</li>
                 <li>Username and password must be alphanumeric. </li>
                 <li>Username and password must be at least a length of 6.</li>
                 <li>Passwords must contain at least one non-letter or digit character.</li>

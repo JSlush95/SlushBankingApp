@@ -16,6 +16,7 @@ namespace BankingApp.Models
         public int Sender { get; set; }
         [Required]
         public int Recipient { get; set; }
+        public string Certificate { get; set; }
         [Required]
         public decimal Amount { get; set; }
         [Required]

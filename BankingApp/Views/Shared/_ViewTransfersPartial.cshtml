@@ -27,11 +27,20 @@ else
                         <td>@record.Amount</td>
                     </tr>
                 }
-                else if(record.Description == "Transfer")
+                else if (record.Description == "Transfer")
                 {
                     <tr>
                         <td>@record.SenderAccount.User.UserName - @record.SenderAccount.AccountID</td>
                         <td>@record.RecipientAccount.User.UserName - @record.RecipientAccount.AccountID</td>
+                        <td>@record.Description</td>
+                        <td>@record.Amount</td>
+                    </tr>
+                }
+                else if (record.Description == "Payment")
+                {
+                    <tr>
+                        <td>@record.SenderAccount.User.UserName</td>
+                        <td>@record.RecipientAccount.User.UserName</td>
                         <td>@record.Description</td>
                         <td>@record.Amount</td>
                     </tr>

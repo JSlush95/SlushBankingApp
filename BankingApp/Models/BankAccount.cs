@@ -16,6 +16,7 @@ namespace BankingApp.Models
         public decimal Balance { get; set; }
         [Required]
         public int Holder { get; set; }
+        public string PermissionKey { get; set; }
         [Required]
         public DateTime DateOpened { get; set; }
         [Required]
@@ -25,7 +26,7 @@ namespace BankingApp.Models
         public virtual User User { get; set; }
     }
 
-    public enum AccountType{
+    public enum AccountType {
         Checking,
         Savings
     }
