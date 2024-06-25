@@ -63,32 +63,42 @@
                         <li>The account alias must match the one used in the companion store website.</li>
                         <li>The account alias must not be in use already.</li>
                     </ul>
-                    using (Html.BeginForm("SetAccountAlias", "Manage", FormMethod.Post, new { role = "form" }))
-                    {
-                        @Html.AntiForgeryToken()
-                        @Html.ValidationSummary("", new { @class = "text-danger" })
-                        <div class="row">
-                            @Html.LabelFor(m => m.AliasFormInput, new { @class = "col-md-2 col-form-label" })
-                            <div class="col-md-10">
-                                @Html.TextBoxFor(m => m.AliasFormInput, new { @class = "form-control" })
-                            </div>
-                        </div>
-                        <br />
-                        <div class="row">
-                            <div class="offset-md-2 col-md-10">
-                                <input type="submit" value="Set Alias" class="btn btn-light" />
-                            </div>
-                        </div>
-                    }
-                    <br />
                     <br />
                 }
                 else
                 {
                     <details>
-                        <summary>Account Alias:</summary>
-                        @Model.AccountAlias
+                        <p class="lead">
+                            <summary>Account Alias:</summary>
+                            &emsp;@Model.AccountAlias
+                        </p>
                     </details>
+                    <br />
+                }
+                @using (Html.BeginForm("SetAccountAlias", "Manage", FormMethod.Post, new { role = "form" }))
+                {
+                    @Html.AntiForgeryToken()
+                    @Html.ValidationSummary("", new { @class = "text-danger" })
+                    <div class="row">
+                        @Html.LabelFor(m => m.AliasFormInput, new { @class = "col-md-1 col-form-label" })
+                        <div class="col-md-10">
+                            @Html.TextBoxFor(m => m.AliasFormInput, new { @class = "form-control", required = "required" })
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="offset-md-1 col-md-10">
+                            @if (!Model.AccountAliasSet)
+                            {
+                                <input type="submit" value="Set Alias" class="btn btn-light" />
+                            }
+                            else
+                            {
+                                <input type="submit" value="Change Alias" class="btn btn-light" />
+                            }
+
+                        </div>
+                    </div>
+                    <br />
                 }
             </div>
             <br />

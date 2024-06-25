@@ -18,7 +18,6 @@ namespace BankingApp.Models
         public bool EmailConfirmed { get; set; }
         public UserType AccountType {  get; set; }
         public string AccountAlias { get; set; }
-        [Required]
         [Display(Name = "Alias Name")]
         public string AliasFormInput { get; set; }
         public bool AccountAliasSet { get; set; }

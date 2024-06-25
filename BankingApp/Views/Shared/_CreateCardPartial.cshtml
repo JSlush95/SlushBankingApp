@@ -14,7 +14,7 @@
         <br />
         <div class="form-group">
             @Html.LabelFor(m => m.KeyID, new { @class = "col-md-2 col-form-label" })
-            @Html.TextBoxFor(m => m.KeyID, new { @class = "form-control" })
+            @Html.TextBoxFor(m => m.KeyID, new { @class = "form-control", maxLength = 5 })
             @Html.ValidationMessageFor(m => m.KeyID, "", new { @class = "text-danger" })
         </div>
         <br />
@@ -36,7 +36,7 @@
             <strong>Rules:</strong>
             <ul>
                 <li>If there are no accounts, nothing is selectable.</li>
-                <li>The KeyID must be a non-decimal, non-negative number with 5 digits (example: 12345). This is used to validate purchases from the companion store website.</li>
+                <li>The KeyID must be a non-decimal, non-negative number with 5 digits and no leading zeroes (example: 12345, not 00001). This is used to validate purchases from the companion store website.</li>
                 <li>An account must be selected.</li>
             </ul>
         </div>

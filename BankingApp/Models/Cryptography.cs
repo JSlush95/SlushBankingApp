@@ -18,7 +18,7 @@ namespace BankingApp.Models
             _privateKey = ConfigurationManager.AppSettings["PrivateKey"];
         }
 
-        public int DecryptID(string encryptedID)
+        public string DecryptID(string encryptedID)
         {
             try
             {
@@ -31,7 +31,7 @@ namespace BankingApp.Models
 
                     // Decrypting the bytes.
                     var decryptedBytesID = rsa.Decrypt(encryptedBytesID, RSAEncryptionPadding.Pkcs1);
-                    var decryptedID = Int32.Parse(Encoding.UTF8.GetString(decryptedBytesID));
+                    var decryptedID = Encoding.UTF8.GetString(decryptedBytesID);
 
                     return decryptedID;
                 }
@@ -50,6 +50,18 @@ namespace BankingApp.Models
             {
                 Log.Error("An error occurred while decrypting ID.", ex);
                 throw new CryptographicException("An error occurred while decrypting ID.", ex);
+            }
+        }
+
+        public string GenerateRandomCertificate(int stringLength)
+        {
+            using (var rng = new RNGCryptoServiceProvider())
+            {
+                var bit_count = (stringLength * 6);
+                var byte_count = ((bit_count + 7) / 8); // rounded up
+                var bytes = new byte[byte_count];
+                rng.GetBytes(bytes);
+                return Convert.ToBase64String(bytes);
             }
         }
     }
