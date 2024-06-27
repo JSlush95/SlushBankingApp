@@ -12,12 +12,5 @@ namespace BankingApp.Controllers
         {
             return View();
         }
-
-        public ActionResult About()
-        {
-            ViewBag.Message = "Contact and information home page.";
-
-            return View();
-        }
     }
 }
