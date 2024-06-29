@@ -24,11 +24,18 @@ namespace BankingApp.Models
         [Required]
         public DateTime TimeExecuted { get; set; }
         [Required]
-        public bool Pending { get; set; }
+        public TransactionStatus Status { get; set; }
         // Navigation fields for the foreign key "Sender" and "Recipient" relationships for BankAccount's AccountID key.
         [ForeignKey("Sender")]
         public virtual BankAccount SenderAccount { get; set; }
         [ForeignKey("Recipient")]
         public virtual BankAccount RecipientAccount { get; set; }
+    }
+
+    public enum TransactionStatus
+    {
+        Pending,
+        Approved,
+        Refunded
     }
 }

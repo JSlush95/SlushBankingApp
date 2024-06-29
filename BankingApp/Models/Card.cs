@@ -18,8 +18,8 @@ namespace BankingApp.Models
         [StringLength(11)]
         public string CardNumber { get; set; }
         [Required]
-        [Range(10000, 99999)]
-        public int KeyID { get; set; }
+        [StringLength(5)]
+        public string KeyPIN { get; set; }
         [Required]
         public int AssociatedAccount { get; set; }
         [Required]

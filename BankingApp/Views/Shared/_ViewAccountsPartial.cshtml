@@ -59,7 +59,7 @@ else
                                     <th scope="col">Card ID</th>
                                     <th scope="col">Card Type</th>
                                     <th scope="col">Card Number</th>
-                                    <th scope="col">Key ID</th>
+                                    <th scope="col">Key PIN</th>
                                     <th scope="col">Delete Card</th>
                                 </tr>
                             </thead>
@@ -70,7 +70,7 @@ else
                                         <td>@card.CardID</td>
                                         <td>@card.CardType</td>
                                         <td>@card.CardNumber</td>
-                                        <td>@card.KeyID</td>
+                                        <td>@card.KeyPIN</td>
                                         <td>
                                             @using (Html.BeginForm("RemoveCard", "Manage", new { cardID = card.CardID }, FormMethod.Post, new { @class = "form-horizontal", role = "form" }))
                                             {

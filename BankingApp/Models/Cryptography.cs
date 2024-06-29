@@ -18,7 +18,7 @@ namespace BankingApp.Models
             _privateKey = ConfigurationManager.AppSettings["PrivateKey"];
         }
 
-        public string DecryptID(string encryptedID)
+        public string DecryptItem(string encryptedItem)
         {
             try
             {
@@ -26,30 +26,30 @@ namespace BankingApp.Models
                 {
                     rsa.FromXmlString(_privateKey);
 
-                    // Converting the encrypted key ID from base64 string to bytes.
-                    var encryptedBytesID = Convert.FromBase64String(encryptedID);
+                    // Converting the encrypted item from base64 string to bytes.
+                    var encryptedBytes = Convert.FromBase64String(encryptedItem);
 
                     // Decrypting the bytes.
-                    var decryptedBytesID = rsa.Decrypt(encryptedBytesID, RSAEncryptionPadding.Pkcs1);
-                    var decryptedID = Encoding.UTF8.GetString(decryptedBytesID);
+                    var decryptedAsBytes = rsa.Decrypt(encryptedBytes, RSAEncryptionPadding.Pkcs1);
+                    var decryptedItem = Encoding.UTF8.GetString(decryptedAsBytes);
 
-                    return decryptedID;
+                    return decryptedItem;
                 }
             }
             catch (FormatException ex)
             {
-                Log.Error("Invalid format while decrypting ID.", ex);
-                throw new CryptographicException("Invalid format while decrypting ID.", ex);
+                Log.Error("Invalid format while decrypting the item.", ex);
+                throw new CryptographicException("Invalid format while decrypting the item.", ex);
             }
             catch (CryptographicException ex)
             {
-                Log.Error("Cryptographic exception occurred while decrypting ID.", ex);
-                throw new CryptographicException("Cryptographic exception occurred while decrypting ID.", ex);
+                Log.Error("Cryptographic exception occurred while decrypting the item.", ex);
+                throw new CryptographicException("Cryptographic exception occurred while decrypting the item.", ex);
             }
             catch (Exception ex)
             {
-                Log.Error("An error occurred while decrypting ID.", ex);
-                throw new CryptographicException("An error occurred while decrypting ID.", ex);
+                Log.Error("An error occurred while decrypting the item.", ex);
+                throw new CryptographicException("An error occurred while decrypting the item.", ex);
             }
         }
 
@@ -58,7 +58,7 @@ namespace BankingApp.Models
             using (var rng = new RNGCryptoServiceProvider())
             {
                 var bit_count = (stringLength * 6);
-                var byte_count = ((bit_count + 7) / 8); // rounded up
+                var byte_count = ((bit_count + 7) / 8); // Rounded up
                 var bytes = new byte[byte_count];
                 rng.GetBytes(bytes);
                 return Convert.ToBase64String(bytes);

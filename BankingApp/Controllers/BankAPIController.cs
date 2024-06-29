@@ -32,14 +32,35 @@ namespace BankingApp.Controllers
             _cryptography = new Cryptography();
         }
 
+        // Deserialized transaction request from the storefront.
+        public class TransactionRequest
+        {
+            public string EncryptedCardNumber { get; set; }
+            public string EncryptedKeyPIN { get; set; }
+            public List<VendorTransaction> VendorTransactions { get; set; }
+        }
+
+        // Deserialized vendor information from the storefront.
+        public class VendorTransaction
+        {
+            public string VendorAlias { get; set; }
+            public decimal TotalAmount { get; set; }
+        }
+
+        // Deserialized refund request from the storefront.
+        public class RefundRequest
+        {
+            public List<string> Certificates { get; set; }
+            public List<decimal> Amounts { get; set; }
+        }
 
         [HttpGet]
         [Route("api/VerifyCard")]
-       public IHttpActionResult VerifyCardStatus(string encryptedCardNumber, string encryptedKeyID)
+       public IHttpActionResult VerifyCardStatus(string encryptedCardNumber, string encryptedKeyPIN)
         {
             Log.Info($"Verifying card status for this card...");
             
-            if (string.IsNullOrWhiteSpace(encryptedCardNumber) || string.IsNullOrWhiteSpace(encryptedKeyID))
+            if (string.IsNullOrWhiteSpace(encryptedCardNumber) || string.IsNullOrWhiteSpace(encryptedKeyPIN))
             {
                 Log.Warn("Card number and key ID must be provided");
                 return BadRequest("Card number and key ID must be provided.");
@@ -47,8 +68,8 @@ namespace BankingApp.Controllers
 
             try
             {
-                var decryptedID = _cryptography.DecryptID(encryptedKeyID);
-                var decryptedCardNumber = _cryptography.DecryptID(encryptedCardNumber);
+                var decryptedID = _cryptography.DecryptItem(encryptedKeyPIN);
+                var decryptedCardNumber = _cryptography.DecryptItem(encryptedCardNumber);
                 var card = GetCard(decryptedCardNumber);
                 
                 if (card == null)
@@ -57,8 +78,7 @@ namespace BankingApp.Controllers
                     return NotFound();
                 }
 
-                int decryptedIDNum = Int32.Parse(decryptedID);
-                IHttpActionResult cardStatus = ValidateCardStatus(card, decryptedIDNum);
+                IHttpActionResult cardStatus = ValidateCardStatus(card, decryptedID);
                 Log.Info($"Verify Card Status API returned: {cardStatus}.");
                 return cardStatus;
             }
@@ -74,74 +94,84 @@ namespace BankingApp.Controllers
             }
         }
 
-        [HttpGet]
+        [HttpPost]
         [Route("api/InitiateTransaction")]
-        public IHttpActionResult InitiateTransaction(string encryptedCardNumber, string encryptedKeyID, string vendorAccountAlias, decimal paymentAmount)
+        public IHttpActionResult InitiateTransaction(TransactionRequest request)
         {
             try
             {
-                if (string.IsNullOrWhiteSpace(encryptedCardNumber) || string.IsNullOrWhiteSpace(vendorAccountAlias))
+                if (string.IsNullOrWhiteSpace(request.EncryptedCardNumber) || string.IsNullOrWhiteSpace(request.EncryptedKeyPIN))
                 {
-                    return BadRequest("Card number and vendor account name must be provided.");
+                    return BadRequest("Card number and KeyPIN must be provided.");
                 }
 
-                string decryptedID = _cryptography.DecryptID(encryptedKeyID);
-                string decryptedCardNumber = _cryptography.DecryptID(encryptedCardNumber);
+                string decryptedKeyPIN = _cryptography.DecryptItem(request.EncryptedKeyPIN);
+                string decryptedCardNumber = _cryptography.DecryptItem(request.EncryptedCardNumber);
                 var card = GetCard(decryptedCardNumber);
                 var customerBankAccount = card.AssociatedBankAccount;
-                var vendorBankAccount = db.BankAccounts
-                    .Where(ba => ba.User.Alias == vendorAccountAlias)
-                    .FirstOrDefault();
 
-                if (card == null)
+                if (card == null || customerBankAccount == null)
                 {
-                    Log.Warn($"Card with number {decryptedCardNumber} not found.");
+                    Log.Warn($"Card or customer bank account not found.");
                     return NotFound();
                 }
 
-                if (vendorBankAccount == null || customerBankAccount == null)
-                {
-                    Log.Warn($"Could not find the vendor bank account or customer bank account.");
-                    return NotFound();
-                }
+                IHttpActionResult cardStatus = ValidateCardStatus(card, decryptedKeyPIN);
 
-                Log.Info($"Initiating transaction with customer: {vendorBankAccount.User.Alias} and {vendorAccountAlias}");
-                IHttpActionResult cardStatus = ValidateCardStatus(card, Int32.Parse(decryptedID));
-
-                // Cannot continue with payment if the card isn't active or the keyIDs don't match.
                 if (cardStatus == Unauthorized())
                 {
                     Log.Warn($"Verify Card Status API returned: unauthorized.");
                     return cardStatus;
                 }
 
-                if (customerBankAccount.Balance < paymentAmount)
+                decimal totalAmount = request.VendorTransactions.Sum(vt => vt.TotalAmount);
+
+                if (customerBankAccount.Balance < totalAmount)
                 {
-                    Log.Warn("Not enough funds for this transaction of purchase");
+                    Log.Warn("Not enough funds for this transaction.");
                     return BadRequest("Not enough funds to complete the purchase.");
                 }
 
-                vendorBankAccount.Balance += paymentAmount;
-                customerBankAccount.Balance -= paymentAmount;
+                List<string> certificates = new List<string>();
 
-                var certificate = _cryptography.GenerateRandomCertificate(12);
-
-                TransactionRecord transactionRecord = new TransactionRecord()
+                foreach (var transaction in request.VendorTransactions)
                 {
-                    Sender = customerBankAccount.AccountID,
-                    Recipient = vendorBankAccount.AccountID,
-                    Amount = paymentAmount,
-                    Description = $"Payment - Storefront, {vendorAccountAlias}",
-                    Certificate = certificate,
-                    TimeExecuted = DateTime.Now
-                };
+                    string decryptedVendorAccountAlias = _cryptography.DecryptItem(transaction.VendorAlias);
+                    var vendorBankAccount = db.BankAccounts
+                        .Where(ba => ba.User.Alias == decryptedVendorAccountAlias)
+                        .FirstOrDefault();
+
+                    if (vendorBankAccount == null)
+                    {
+                        Log.Warn($"Vendor bank account not found for alias: {decryptedVendorAccountAlias}");
+                        return NotFound();
+                    }
+
+                    vendorBankAccount.Balance += transaction.TotalAmount;
+                    customerBankAccount.Balance -= transaction.TotalAmount;
+
+                    var certificate = _cryptography.GenerateRandomCertificate(12);
+                    certificates.Add(certificate);
+
+                    TransactionRecord transactionRecord = new TransactionRecord()
+                    {
+                        Sender = customerBankAccount.AccountID,
+                        Recipient = vendorBankAccount.AccountID,
+                        Amount = transaction.TotalAmount,
+                        Status = TransactionStatus.Approved,
+                        Description = $"Purchase - {vendorBankAccount.User.UserName}",
+                        Certificate = certificate,
+                        TimeExecuted = DateTime.Now
+                    };
+
+                    db.TransactionRecords.Add(transactionRecord);
+                }
 
                 try
                 {
-                    db.TransactionRecords.Add(transactionRecord);
                     db.SaveChanges();
                     Log.Info("Payment from the storefront is complete.");
-                    return Ok($"Payment complete. Certificate: {certificate}");
+                    return Ok(new { Certificates = certificates });
                 }
                 catch (Exception ex)
                 {
@@ -163,6 +193,75 @@ namespace BankingApp.Controllers
             }
         }
 
+        [HttpPost]
+        [Route("api/InitiateRefund")]
+        public IHttpActionResult InitiateRefund(RefundRequest request)
+        {
+            if (request.Certificates == null || request.Amounts == null || request.Certificates.Count != request.Amounts.Count)
+            {
+                return BadRequest("Invalid refund request.");
+            }
+
+            try
+            {
+                // Using the de-serialized Request object from the API payload to handle the refund transaction.
+                for (int i = 0; i < request.Certificates.Count; i++)
+                {
+                    var certificate = request.Certificates[i];
+                    // Cannot use 'tr.Certificate == reqest.Certificates[i]' statement because it needs to be a direct SQL-compatible statement instead. Hence the above.
+                    var transactionRecord = db.TransactionRecords
+                        .Where(tr => tr.Certificate == certificate)
+                        .FirstOrDefault();
+
+                    if (transactionRecord == null)
+                    {
+                        Log.Warn($"Transaction record not found for certificate: {request.Certificates[i]}");
+                        return NotFound();
+                    }
+
+                    var customerAccount = transactionRecord.SenderAccount;
+                    var vendorAccount = transactionRecord.RecipientAccount;
+                    Log.Info($"Original balances: Customer {customerAccount.Balance}, Vendor {vendorAccount.Balance}");
+
+                    customerAccount.Balance += request.Amounts[i];
+                    vendorAccount.Balance -= request.Amounts[i];
+                    Log.Info($"Updated balances after refund: Customer {customerAccount.Balance}, Vendor {vendorAccount.Balance}");
+
+                    TransactionRecord refundRecord = new TransactionRecord()
+                    {
+                        Sender = vendorAccount.AccountID,
+                        Recipient = customerAccount.AccountID,
+                        Description = $"Refund - {vendorAccount.User.UserName}",
+                        Amount = request.Amounts[i],
+                        Certificate = _cryptography.GenerateRandomCertificate(12),
+                        TimeExecuted = DateTime.Now,
+                        Status = TransactionStatus.Approved
+                    };
+
+                    transactionRecord.Status = TransactionStatus.Refunded;
+
+                    db.TransactionRecords.Add(refundRecord);
+                }
+
+                try
+                {
+                    db.SaveChanges();
+                    Log.Info("Refund from the storefront is complete.");
+                    return Ok("Refund successful");
+                }
+                catch (Exception ex)
+                {
+                    Log.Warn($"Error occurred during DB transaction, under an initiated refund. {ex}");
+                    return InternalServerError();
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error("An error occurred during refund processing.", ex);
+                return InternalServerError(ex);
+            }
+        }
+
         protected override void Dispose(bool disposing)
         {
             if (disposing)
@@ -172,11 +271,11 @@ namespace BankingApp.Controllers
             base.Dispose(disposing);
         }
 
-        private IHttpActionResult ValidateCardStatus(Card card, int keyID)
+        private IHttpActionResult ValidateCardStatus(Card card, string KeyPIN)
         {
-            if (!card.Active || card.KeyID != keyID)
+            if (!card.Active || card.KeyPIN != KeyPIN)
             {
-                Log.Warn("Card is inactive or the keyID didn't match.");
+                Log.Warn("Card is inactive or the KeyPIN didn't match.");
                 return Unauthorized();
             }
 

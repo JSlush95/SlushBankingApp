@@ -438,7 +438,7 @@ namespace BankingApp.Controllers
                 {
                     CardType = model.CardType,
                     CardNumber = generatedCardNumber,
-                    KeyID = model.KeyID,
+                    KeyPIN = model.KeyPIN,
                     AssociatedAccount = model.SelectedAccountID,
                     IssueDate = DateTime.Now,
                     Active = true
@@ -535,6 +535,7 @@ namespace BankingApp.Controllers
                     Sender = sourceAccount.AccountID,
                     Recipient = destinationAccount.AccountID,
                     Amount = model.Amount,
+                    Status = TransactionStatus.Approved,
                     Description = "Transfer",
                     TimeExecuted = DateTime.Now
                 };

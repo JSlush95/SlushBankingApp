@@ -162,9 +162,9 @@ namespace BankingApp.Models
         public int SelectedAccountID { get; set; }
 
         [Required(ErrorMessage = "Please select a valid non-decimal, non-negative number with 5 digits.")]
-        [Display(Name = "Key ID")]
-        [Range(10000, 99999, ErrorMessage = "Value must be a 5 digit number.")]
-        public int KeyID { get; set; }
+        [Display(Name = "Key PIN")]
+        [StringLength(5)]
+        public string KeyPIN { get; set; }
 
         [Required(ErrorMessage = "Please select a card type")]
         [Display(Name = "Card Type")]
