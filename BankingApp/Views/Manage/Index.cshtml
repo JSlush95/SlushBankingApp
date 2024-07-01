@@ -53,7 +53,7 @@
                     <br />
                 }
             </dd>
-            <br />
+            <br /><br />
             <div class="container-md">
                 @if (!Model.AccountAliasSet)
                 {
@@ -63,17 +63,20 @@
                         <li>The account alias must match the one used in the companion store website.</li>
                         <li>The account alias must not be in use already.</li>
                     </ul>
-                    <br />
                 }
                 else
                 {
+                    <strong>Alias Note</strong>
+                    <ul>
+                        <li>An account alias is used to connect to the companion store website.</li>
+                        <li>The alias must match the one used in the companion website.</li>
+                    </ul>
                     <details>
                         <p class="lead">
                             <summary>Account Alias:</summary>
                             &emsp;@Model.AccountAlias
                         </p>
                     </details>
-                    <br />
                 }
                 @using (Html.BeginForm("SetAccountAlias", "Manage", FormMethod.Post, new { role = "form" }))
                 {

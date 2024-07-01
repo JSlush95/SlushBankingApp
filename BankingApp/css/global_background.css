@@ -63,3 +63,24 @@ a:hover {
 #two-FA-link.btn.btn-link:hover {
     color: #ffffcc;
 }
+
+/* The "spoiler" tag for the account alias. */
+details {
+    background-color: darkslategray;
+    border: 1px solid #2ecc71;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+summary {
+    color: #00ff21;
+    cursor: pointer;
+}
+
+summary:hover {
+    color: #ffffcc;
+}
+
+details {
+    color:#15b972;
+}
