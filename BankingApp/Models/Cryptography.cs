@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Web;
 
@@ -15,7 +16,12 @@ namespace BankingApp.Models
 
         public Cryptography()
         {
-            _privateKey = ConfigurationManager.AppSettings["PrivateKey"];
+            _privateKey = EnvironmentVariables.PrivateKey;
+            if (string.IsNullOrEmpty(_privateKey))
+            {
+                Log.Warn("Private key environment variable not set.");
+                throw new ApplicationException("Private key environment variable not set.");
+            }
         }
 
         public string DecryptItem(string encryptedItem)

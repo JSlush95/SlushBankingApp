@@ -12,6 +12,7 @@ using Microsoft.Owin;
 using Microsoft.Owin.Security;
 using BankingApp.Models;
 using System.Configuration;
+using BankingApp.Utilities;
 
 namespace BankingApp
 {
@@ -20,13 +21,13 @@ namespace BankingApp
         public Task SendAsync(IdentityMessage message)
         {
             // Credentials
-            var credentialUserName = ConfigurationManager.AppSettings["MailAccount"];
-            var sentFrom = ConfigurationManager.AppSettings["MailAccount"];
-            var password = ConfigurationManager.AppSettings["MailPassword"];
+            var credentialUserName = EnvironmentVariables.MailAccount;
+            var sentFrom = EnvironmentVariables.MailAccount;
+            var password = EnvironmentVariables.MailPassword;
 
             // Configure the client
             System.Net.Mail.SmtpClient client =
-                new System.Net.Mail.SmtpClient(ConfigurationManager.AppSettings["SmtpHost"]);
+                new System.Net.Mail.SmtpClient(EnvironmentVariables.SmtpHost);
 
             client.Port = 587;
             client.DeliveryMethod = System.Net.Mail.SmtpDeliveryMethod.Network;

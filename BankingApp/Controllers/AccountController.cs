@@ -9,6 +9,7 @@ using Microsoft.AspNet.Identity;
 using Microsoft.AspNet.Identity.Owin;
 using Microsoft.Owin.Security;
 using BankingApp.Models;
+using BankingApp.Utilities;
 
 namespace BankingApp.Controllers
 {
@@ -197,18 +198,27 @@ namespace BankingApp.Controllers
             return View(model);
         }
 
-        public async Task<ActionResult> ResendConfirmationEmail()
+        public ActionResult ResendConfirmationEmail()
         {
-            // Async Exception?
-            var user = await UserManager.FindByNameAsync(User.Identity.GetUserName());
-            if (user != null)
+            try
             {
-                string code = await UserManager.GenerateEmailConfirmationTokenAsync(user.Id);
-                var callbackUrl = Url.Action("ConfirmEmail", "Account", new { userId = user.Id, code = code }, protocol: Request.Url.Scheme);
-                string emailBody = $"Thank you for signing up for my fake banking website!<br/>Please confirm your account by clicking <a href=\"{callbackUrl}\">here</a>";
-                await UserManager.SendEmailAsync(user.Id, "Account Confirmation", emailBody);
+                var user = UserManager.FindByName(User.Identity.GetUserName());
+                if (user != null)
+                {
+                    string code = UserManager.GenerateEmailConfirmationToken(user.Id);
+                    var callbackUrl = Url.Action("ConfirmEmail", "Account", new { userId = user.Id, code = code }, protocol: Request.Url.Scheme);
+                    string emailBody = $"Thank you for signing up for my fake banking website!<br/>Please confirm your account by clicking <a href=\"{callbackUrl}\">here</a>";
 
-                return RedirectToAction("EmailConfirmationSent", "Account");
+                    UserManager.SendEmail(user.Id, "Account Confirmation", emailBody);
+
+                    return RedirectToAction("EmailConfirmationSent", "Account");
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warn($"Error with sending confirmation email: {ex}");
+                ViewBag.ErrorMessage = "An error occurred while resending the confirmation email. Please try again later.";
+                return View("CustomError");
             }
 
             return View("Error");
