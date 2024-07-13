@@ -31,6 +31,7 @@ namespace BankingApp.Models
                 using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
                 {
                     rsa.FromXmlString(_privateKey);
+                    Log.Info("Decrypting item...");
 
                     // Converting the encrypted item from base64 string to bytes.
                     var encryptedBytes = Convert.FromBase64String(encryptedItem);
@@ -39,6 +40,7 @@ namespace BankingApp.Models
                     var decryptedAsBytes = rsa.Decrypt(encryptedBytes, RSAEncryptionPadding.Pkcs1);
                     var decryptedItem = Encoding.UTF8.GetString(decryptedAsBytes);
 
+                    Log.Info($"Item decrypted.");
                     return decryptedItem;
                 }
             }
@@ -49,7 +51,7 @@ namespace BankingApp.Models
             }
             catch (CryptographicException ex)
             {
-                Log.Error("Cryptographic exception occurred while decrypting the item.", ex);
+                Log.Error($"Cryptographic exception occurred while decrypting the item.");
                 throw new CryptographicException("Cryptographic exception occurred while decrypting the item.", ex);
             }
             catch (Exception ex)

@@ -6,6 +6,7 @@ using Microsoft.Owin.Security.Cookies;
 using Microsoft.Owin.Security.Google;
 using Owin;
 using BankingApp.Models;
+using System.Web;
 
 namespace BankingApp
 {
@@ -35,7 +36,16 @@ namespace BankingApp
                             validateInterval: TimeSpan.FromMinutes(30),
                             regenerateIdentityCallback: (manager, user) =>
                                 user.GenerateUserIdentityAsync(manager),
-                            getUserIdCallback: (id) => (id.GetUserId<int>()))
+                            getUserIdCallback: (id) => (id.GetUserId<int>())),
+
+                    // To stop the external API call login page redirection, due to the conflicting handling of authentication + authorization of MVC and WebApi with ASP.NET Identity configurations.
+                    OnApplyRedirect = ctx =>
+                    {
+                        if (!IsApiRequest(ctx.Request))
+                        {
+                            ctx.Response.Redirect(ctx.RedirectUri);
+                        }
+                    }
                 }
             });            
             app.UseExternalSignInCookie(DefaultAuthenticationTypes.ExternalCookie);
@@ -66,6 +76,11 @@ namespace BankingApp
             //    ClientId = "",
             //    ClientSecret = ""
             //});
+        }
+        private static bool IsApiRequest(IOwinRequest request)
+        {
+            string apiPath = VirtualPathUtility.ToAbsolute("~/api/");
+            return request.Uri.LocalPath.StartsWith(apiPath);
         }
     }
 }
