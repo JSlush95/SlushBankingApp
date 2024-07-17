@@ -9,6 +9,7 @@ using Microsoft.Owin.Security;
 using BankingApp.Models;
 using System.Data.Entity;
 using System.Collections.Generic;
+using BankingApp.Utilities;
 
 namespace BankingApp.Controllers
 {
@@ -74,9 +75,9 @@ namespace BankingApp.Controllers
 
         private async Task<IndexViewModel> CreateIndexViewModel()
         {
-            var userId = GetCurrentUserId();
-            var user = await UserManager.FindByIdAsync(userId);
-            var indexModel = new IndexViewModel
+            int userId = GetCurrentUserId();
+            User user = await UserManager.FindByIdAsync(userId);
+            IndexViewModel indexModel = new IndexViewModel
             {
                 HasPassword = HasPassword(),
                 PhoneNumber = await UserManager.GetPhoneNumberAsync(userId),
@@ -106,31 +107,19 @@ namespace BankingApp.Controllers
 
             int userId = GetCurrentUserId();    // Must get the user's ID field for the LINQ functionality, as it cannot evaluate the function call directly.
             
-            var bankAccounts = await _dbContext.BankAccounts    // Creating LINQ queries that will be provided as helper functions to the respective partial views that use their models.
-                .Where(ba => ba.Holder == userId)
-                .ToListAsync();
-            var cards = await _dbContext.Cards
-                .Where(c => c.AssociatedBankAccount.Holder == userId)
-                .ToListAsync();
-            var transactions = await _dbContext.TransactionRecords
-                .Where(t => t.SenderAccount.Holder == userId || t.RecipientAccount.Holder == userId)
-                .ToListAsync();
-            var account = _dbContext.Users
-                .Where(u => u.Id == userId);
-                
-            var accountType = await account
-                .Select(u => u.UserType)
-                .FirstOrDefaultAsync();
-            var accountAlias = await account
-                .Select(u => u.Alias)
-                .FirstOrDefaultAsync();
+            List<BankAccount> bankAccounts = await _dbContext.GetBankAccountsListAsync(userId);
+            List<Card> cards = await _dbContext.GetCardsListAsync(userId);
+            List<TransactionRecord> transactions = await _dbContext.GetTransactionRecordsListAsync(userId);
+            
+            UserType accountType = (UserType)await _dbContext.GetAccountAttributeAsync(userId, ApplicationDbContext.AccountAttribute.Type);
+            string accountAlias = (string)await _dbContext.GetAccountAttributeAsync(userId, ApplicationDbContext.AccountAttribute.Alias);
 
             if (TempData.ContainsKey("Message"))
             {
                 ViewBag.Message = TempData["Message"];
             }
 
-            var model = await CreateIndexViewModel();
+            IndexViewModel model = await CreateIndexViewModel();
             model.CreateCardViewModel = new CreateCardViewModel
             {
                 BankAccounts = bankAccounts.Select(ba => new SelectListItem
@@ -198,14 +187,11 @@ namespace BankingApp.Controllers
         public async Task<ActionResult> SetAccountAlias(string aliasFormInput)
         {
             int userId = GetCurrentUserId();    // Must get the user's ID field for the LINQ functionality, as it cannot evaluate the function call directly.
-            var user = await UserManager.FindByIdAsync(userId);
-            string aliasName = aliasFormInput;
-            var existingUser = await _dbContext.Users
-                .Where(u => u.Alias == aliasName)
-                .FirstOrDefaultAsync();
+            User user = await UserManager.FindByIdAsync(userId);
+            bool existingUser = await _dbContext.CheckExistingUserAsync(aliasFormInput);
 
             // Alias must be unique, since it used for the store's payment API call.
-            if (existingUser != null)
+            if (existingUser)
             {
                 TempData["Message"] = "Alias already exists, choose another.";
                 return RedirectToAction("Index");
@@ -213,7 +199,7 @@ namespace BankingApp.Controllers
 
             if (user != null)
             {
-                user.Alias = aliasName;
+                user.Alias = aliasFormInput;
                 var result = await UserManager.UpdateAsync(user);
 
                 if (result.Succeeded)
@@ -235,7 +221,7 @@ namespace BankingApp.Controllers
         public async Task<ActionResult> CreateAccount(CreateAccountViewModel model)
         {
             int userId = GetCurrentUserId();    // Must get the user's ID field for the LINQ functionality, as it cannot evaluate the function call directly.
-            var user = await UserManager.FindByIdAsync(userId);
+            User user = await UserManager.FindByIdAsync(userId);
             
             if (!ModelState.IsValid)
             {
@@ -246,13 +232,9 @@ namespace BankingApp.Controllers
             if (user.EmailConfirmed)
             {
                 // Utilizing LINQ to query the last time this element was last created, as the anchor to prevent spam.
-                var lastAccountCreationTimestamp = await _dbContext.BankAccounts
-                    .Where(a => a.Holder == userId)
-                    .OrderByDescending(a => a.DateOpened)
-                    .Select(a => a.DateOpened)
-                    .FirstOrDefaultAsync();
+                DateTime lastAccountCreationTimestamp = await _dbContext.GetLastCreatedBankAccountTimestampAsync(userId);
 
-                var newAccount = new BankAccount
+                BankAccount newAccount = new BankAccount
                 {
                     Balance = model.Balance,
                     Holder = GetCurrentUserId(),
@@ -260,13 +242,13 @@ namespace BankingApp.Controllers
                     AccountType = model.AccountType
                 };
 
-                var cooldownPeriod = TimeSpan.FromMinutes(1);  // The cooldown period in minutes.
+                TimeSpan cooldownPeriod = TimeSpan.FromMinutes(1);  // The cooldown period in minutes.
 
                 // Creating a cooldown timer to prevent creation abuse.
                 if (lastAccountCreationTimestamp != default && DateTime.Now - lastAccountCreationTimestamp < cooldownPeriod)
                 {
-                    var timeElapsed = DateTime.Now - lastAccountCreationTimestamp;
-                    var timeRemaining = cooldownPeriod - timeElapsed;
+                    TimeSpan timeElapsed = DateTime.Now - lastAccountCreationTimestamp;
+                    TimeSpan timeRemaining = cooldownPeriod - timeElapsed;
 
                     if (timeRemaining > TimeSpan.Zero)
                     {
@@ -293,10 +275,8 @@ namespace BankingApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> AddFunds(int accountID, decimal? amount)
         {
-            var user = await UserManager.FindByIdAsync(GetCurrentUserId());
-            var account = await _dbContext.BankAccounts
-                .Where(a => a.AccountID == accountID)
-                .FirstOrDefaultAsync();
+            User user = await UserManager.FindByIdAsync(GetCurrentUserId());
+            BankAccount account = await _dbContext.GetBankAccountFromPKeyAsync(accountID);
             
             if (user.EmailConfirmed)
             {
@@ -306,7 +286,7 @@ namespace BankingApp.Controllers
                 }
                 else if (account != null)
                 {
-                    var transaction = new TransactionRecord()
+                    TransactionRecord transaction = new TransactionRecord()
                     {
                         Sender = accountID,
                         Recipient = accountID,
@@ -331,6 +311,7 @@ namespace BankingApp.Controllers
                         {
                             transactionContext.Rollback();
                             TempData["Message"] = "Failed to add funds to the bank account.";
+                            Log.Warn($"Failed to add funds to bank account. {ex}");
                         }
 
                     }
@@ -349,10 +330,8 @@ namespace BankingApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> RemoveAccount(int accountID)
         {
-            var user = await UserManager.FindByIdAsync(GetCurrentUserId());
-            var account = await _dbContext.BankAccounts
-                .Where(a => a.AccountID == accountID)
-                .FirstOrDefaultAsync();
+            User user = await UserManager.FindByIdAsync(GetCurrentUserId());
+            BankAccount account = await _dbContext.GetBankAccountFromPKeyAsync(accountID);
 
             if (user.EmailConfirmed)
             {
@@ -381,7 +360,7 @@ namespace BankingApp.Controllers
         public async Task<ActionResult> CreateCard(CreateCardViewModel model)
         {
             int userId = GetCurrentUserId();    // Must get the user's ID field for the LINQ functionality, as it cannot evaluate the function call directly.
-            var user = await UserManager.FindByIdAsync(userId);
+            User user = await UserManager.FindByIdAsync(userId);
 
             if (!ModelState.IsValid)
             {
@@ -390,18 +369,14 @@ namespace BankingApp.Controllers
             }
 
             // Utilizing LINQ to query the last time this element was last created, as the anchor to prevent spam.
-            var lastCardCreationTimestamp = await _dbContext.Cards
-                .Where(a => a.AssociatedAccount == userId)
-                .OrderByDescending(a => a.IssueDate)
-                .Select(a => a.IssueDate)
-                .FirstOrDefaultAsync();
-            var cooldownPeriod = TimeSpan.FromMinutes(1);  // The cooldown period in minutes.
+            DateTime lastCardCreationTimestamp = await _dbContext.GetLastCreatedCardTimestampAsync(userId);
+            TimeSpan cooldownPeriod = TimeSpan.FromMinutes(1);  // The cooldown period in minutes.
 
             // Creating a cooldown timer to prevent creation abuse.
             if (lastCardCreationTimestamp != default && DateTime.Now - lastCardCreationTimestamp < cooldownPeriod)
             {
-                var timeElapsed = DateTime.Now - lastCardCreationTimestamp;
-                var timeRemaining = cooldownPeriod - timeElapsed;
+                TimeSpan timeElapsed = DateTime.Now - lastCardCreationTimestamp;
+                TimeSpan timeRemaining = cooldownPeriod - timeElapsed;
 
                 if (timeRemaining > TimeSpan.Zero)
                 {
@@ -413,7 +388,7 @@ namespace BankingApp.Controllers
             if (user.EmailConfirmed)
             {
                 string generatedCardNumber;
-                bool isUnique;
+                bool cardExists;
                 string getUniqueString(int stringLength)
                 {
                     using (var rng = new System.Security.Cryptography.RNGCryptoServiceProvider())
@@ -431,10 +406,10 @@ namespace BankingApp.Controllers
                 do
                 {
                     generatedCardNumber = getUniqueString(11);  // Length - 1
-                    isUnique = !_dbContext.Cards.Any(c => c.CardNumber == generatedCardNumber);
-                }while(!isUnique && generatedCardNumber.Length != 11);
+                    cardExists = await _dbContext.CheckExistingCardAsync(generatedCardNumber);
+                }while(!cardExists && generatedCardNumber.Length != 11);
 
-                var newCard = new Card
+                Card newCard = new Card
                 {
                     CardType = model.CardType,
                     CardNumber = generatedCardNumber,
@@ -462,10 +437,8 @@ namespace BankingApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> RemoveCard(int cardID)
         {
-            var user = await UserManager.FindByIdAsync(GetCurrentUserId());
-            var card = _dbContext.Cards
-                .Where(a => a.CardID == cardID)
-                .FirstOrDefault();
+            User user = await UserManager.FindByIdAsync(GetCurrentUserId());
+            Card card = await _dbContext.GetCardFromPKeyAsync(cardID);
 
             if (user.EmailConfirmed)
             {
@@ -488,14 +461,14 @@ namespace BankingApp.Controllers
             return RedirectToAction("Index");
         }
 
+        // POST: /Manage/TransferFunds
         [HttpPost]
         [ValidateAntiForgeryToken]
-        // POST: /Manage/TransferFunds
         public async Task<ActionResult> TransferFunds(TransferFundsViewModel model)
         {
-            var user = await UserManager.FindByIdAsync(GetCurrentUserId());
-            var sourceAccount = await _dbContext.BankAccounts.FindAsync(model.SourceAccountId);
-            var destinationAccount = await _dbContext.BankAccounts.FindAsync(model.DestinationAccountId);
+            User user = await UserManager.FindByIdAsync(GetCurrentUserId());
+            BankAccount sourceAccount = await _dbContext.GetBankAccountFromPKeyAsync(model.SourceAccountId);
+            BankAccount destinationAccount = await _dbContext.GetBankAccountFromPKeyAsync(model.DestinationAccountId);
 
             if (!ModelState.IsValid)
             {

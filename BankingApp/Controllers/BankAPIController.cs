@@ -74,9 +74,9 @@ namespace BankingApp.Controllers
 
             try
             {
-                var decryptedID = _cryptography.DecryptItem(encryptedKeyPIN);
-                var decryptedCardNumber = _cryptography.DecryptItem(encryptedCardNumber);
-                var card = GetCard(decryptedCardNumber);
+                string decryptedKeyPIN = _cryptography.DecryptItem(encryptedKeyPIN);
+                string decryptedCardNumber = _cryptography.DecryptItem(encryptedCardNumber);
+                Card card = _dbContext.GetCardFromCardNumber(decryptedCardNumber);
 
                 if (card == null)
                 {
@@ -84,7 +84,7 @@ namespace BankingApp.Controllers
                     return NotFound();
                 }
 
-                IHttpActionResult cardStatus = ValidateCardStatus(card, decryptedID);
+                IHttpActionResult cardStatus = ValidateCardStatus(card, decryptedKeyPIN);
                 Log.Info($"Verify Card Status API returned: {cardStatus}.");
 
                 return cardStatus;
@@ -118,15 +118,15 @@ namespace BankingApp.Controllers
 
                 string decryptedKeyPIN = _cryptography.DecryptItem(request.EncryptedKeyPIN);
                 string decryptedCardNumber = _cryptography.DecryptItem(request.EncryptedCardNumber);
-                var card = GetCard(decryptedCardNumber);
-                var customerBankAccount = card.AssociatedBankAccount;
+                Card card = _dbContext.GetCardFromCardNumber(decryptedCardNumber);
+                BankAccount customerBankAccount = card.AssociatedBankAccount;
 
                 if (card == null || customerBankAccount == null)
                 {
                     Log.Warn($"Card or customer bank account not found.");
                     return NotFound();
                 }
-
+                
                 IHttpActionResult cardStatus = ValidateCardStatus(card, decryptedKeyPIN);
 
                 if (cardStatus == Unauthorized())
@@ -148,9 +148,7 @@ namespace BankingApp.Controllers
                 foreach (var transaction in request.VendorTransactions)
                 {
                     string decryptedVendorAccountAlias = _cryptography.DecryptItem(transaction.VendorAlias);
-                    var vendorBankAccount = _dbContext.BankAccounts
-                        .Where(ba => ba.User.Alias == decryptedVendorAccountAlias)
-                        .FirstOrDefault();
+                    BankAccount vendorBankAccount = _dbContext.GetBankAccountFromAlias(decryptedVendorAccountAlias);
 
                     if (vendorBankAccount == null)
                     {
@@ -161,7 +159,7 @@ namespace BankingApp.Controllers
                     vendorBankAccount.Balance += transaction.TotalAmount;
                     customerBankAccount.Balance -= transaction.TotalAmount;
 
-                    var certificate = _cryptography.GenerateRandomCertificate(12);
+                    string certificate = _cryptography.GenerateRandomCertificate(12);
                     certificates.Add(certificate);
 
                     TransactionRecord transactionRecord = new TransactionRecord()
@@ -186,20 +184,23 @@ namespace BankingApp.Controllers
                 }
                 catch (Exception ex)
                 {
-                    Log.Warn($"Error occurred during DB transaction. {ex}");
+                    Log.Error($"Error occurred during DB transaction. {ex}");
                     return InternalServerError();
                 }
             }
             catch (FormatException ex)
             {
+                Log.Error($"Invalid format for the provided parameters. {ex}");
                 return BadRequest("Invalid format for the provided parameters.");
             }
             catch (CryptographicException ex)
             {
+                Log.Error($"An error occurred during decryption. {ex}");
                 return BadRequest("An error occurred during decryption.");
             }
             catch (Exception ex)
             {
+                Log.Error($"Internal server error. {ex}");
                 return InternalServerError(ex);
             }
         }
@@ -222,9 +223,9 @@ namespace BankingApp.Controllers
                 // Using the de-serialized Request object from the API payload to handle the refund transaction.
                 for (int i = 0; i < request.Certificates.Count; i++)
                 {
-                    var certificate = request.Certificates[i];
+                    string certificate = request.Certificates[i];
                     // Cannot use 'tr.Certificate == reqest.Certificates[i]' statement because it needs to be a direct SQL-compatible statement instead. Hence the above.
-                    var transactionRecord = _dbContext.TransactionRecords
+                    TransactionRecord transactionRecord = _dbContext.TransactionRecords
                         .Where(tr => tr.Certificate == certificate)
                         .FirstOrDefault();
 
@@ -234,8 +235,8 @@ namespace BankingApp.Controllers
                         return NotFound();
                     }
 
-                    var customerAccount = transactionRecord.SenderAccount;
-                    var vendorAccount = transactionRecord.RecipientAccount;
+                    BankAccount customerAccount = transactionRecord.SenderAccount;
+                    BankAccount vendorAccount = transactionRecord.RecipientAccount;
                     Log.Info($"Original balances: Customer {customerAccount.Balance}, Vendor {vendorAccount.Balance}");
 
                     customerAccount.Balance += request.Amounts[i];
@@ -266,7 +267,7 @@ namespace BankingApp.Controllers
                 }
                 catch (Exception ex)
                 {
-                    Log.Warn($"Error occurred during DB transaction, under an initiated refund. {ex}");
+                    Log.Error($"Error occurred during DB transaction, under an initiated refund. {ex}");
                     return InternalServerError();
                 }
             }
@@ -286,25 +287,21 @@ namespace BankingApp.Controllers
             base.Dispose(disposing);
         }
 
-        private IHttpActionResult ValidateCardStatus(Card card, string KeyPIN)
+        private IHttpActionResult ValidateCardStatus(Card card, string keyPIN)
         {
-            Log.Info($"Validating Card Status: {card.KeyPIN} and {KeyPIN}");
-            if (!card.Active || card.KeyPIN != KeyPIN)
+            Log.Info($"Validating Card Status");
+            bool valid = card.ValidatePINWithWebAPICall(keyPIN);
+
+            if (!valid)
             {
                 Log.Warn("Card is inactive or the KeyPIN didn't match.");
                 return Unauthorized();
             }
-
-            Log.Info("Validation success. Card is available for use.");
-            return Ok("Verification complete. Card is available for use.");
-        }
-
-        private Card GetCard(string cardNumber)
-        {
-            Log.Info($"Getting card from {cardNumber}.");
-            return _dbContext.Cards
-                .Where(c => c.CardNumber == cardNumber)
-                .FirstOrDefault();
+            else
+            {
+                Log.Info("Verification success. Card is available for use.");
+                return Ok("Verification complete. Card is available for use.");
+            }
         }
     }
 }

@@ -29,6 +29,16 @@ namespace BankingApp.Models
         // Navigation field for the foreign key "AssociatedAccount" relationship for the BankAccount's AccountID key.
         [ForeignKey("AssociatedAccount")]
         public virtual BankAccount AssociatedBankAccount { get; set; }
+
+        public bool ValidatePINWithWebAPICall(string externalPIN)
+        {
+            if (!Active || KeyPIN != externalPIN)
+            {
+                return false;
+            }
+
+            return true;
+        }
     }
 
     public enum CardType

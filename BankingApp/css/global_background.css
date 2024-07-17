@@ -23,6 +23,12 @@ select option {
     background-color: white;
 }
 
+.text-success {
+    background-color: darkslategray;
+    color:white !important;
+    text-align:center
+}
+
 .nav {
     background-color: darkslategray;
 }
