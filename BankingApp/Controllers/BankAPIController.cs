@@ -218,21 +218,30 @@ namespace BankingApp.Controllers
                 return BadRequest("Invalid refund request.");
             }
 
+            // Getting the current user's alias from the request context.
+            string authHeader = Request.Headers.Authorization?.ToString();
+            string requestAlias = authHeader.Substring("Alias".Length).Trim();
+            string decryptedAlias = _cryptography.DecryptItem(requestAlias);
+
             try
             {
                 // Using the de-serialized Request object from the API payload to handle the refund transaction.
                 for (int i = 0; i < request.Certificates.Count; i++)
                 {
                     string certificate = request.Certificates[i];
-                    // Cannot use 'tr.Certificate == reqest.Certificates[i]' statement because it needs to be a direct SQL-compatible statement instead. Hence the above.
-                    TransactionRecord transactionRecord = _dbContext.TransactionRecords
-                        .Where(tr => tr.Certificate == certificate)
-                        .FirstOrDefault();
+                    TransactionRecord transactionRecord = _dbContext.GetTransactionRecordFromCertificate(certificate);
 
                     if (transactionRecord == null)
                     {
                         Log.Warn($"Transaction record not found for certificate: {request.Certificates[i]}");
                         return NotFound();
+                    }
+
+                    // Additional security protocol, the alias of the related transaction record must have the same alias as the request.
+                    if (transactionRecord.SenderAccount.User.Alias != decryptedAlias)
+                    {
+                        Log.Warn($"Unauthorized attempt to refund certificate, alias mismatch for certificate: {request.Certificates[i]}");
+                        return Unauthorized();
                     }
 
                     BankAccount customerAccount = transactionRecord.SenderAccount;

@@ -85,18 +85,18 @@ namespace BankingApp.Models
         public DateTime GetLastCreatedBankAccountTimestamp(int userID)
         {
             return BankAccounts
-                .Where(a => a.Holder == userID)
-                .OrderByDescending(a => a.DateOpened)
-                .Select(a => a.DateOpened)
+                .Where(ba => ba.Holder == userID)
+                .OrderByDescending(ba => ba.DateOpened)
+                .Select(ba => ba.DateOpened)
                 .FirstOrDefault();
         }
 
         public async Task<DateTime> GetLastCreatedBankAccountTimestampAsync(int userID)
         {
             return await BankAccounts
-                .Where(a => a.Holder == userID)
-                .OrderByDescending(a => a.DateOpened)
-                .Select(a => a.DateOpened)
+                .Where(ba => ba.Holder == userID)
+                .OrderByDescending(ba => ba.DateOpened)
+                .Select(ba => ba.DateOpened)
                 .FirstOrDefaultAsync();
         }
 
@@ -221,33 +221,47 @@ namespace BankingApp.Models
         public DateTime GetLastCreatedCardTimestamp(int userID)
         {
             return Cards
-                .Where(a => a.AssociatedBankAccount.Holder == userID)
-                .OrderByDescending(a => a.IssueDate)
-                .Select(a => a.IssueDate)
+                .Where(c => c.AssociatedBankAccount.Holder == userID)
+                .OrderByDescending(c => c.IssueDate)
+                .Select(c => c.IssueDate)
                 .FirstOrDefault();
         }
 
         public async Task<DateTime> GetLastCreatedCardTimestampAsync(int userID)
         {
             return await Cards
-                .Where(a => a.AssociatedBankAccount.Holder == userID)
-                .OrderByDescending(a => a.IssueDate)
-                .Select(a => a.IssueDate)
+                .Where(c => c.AssociatedBankAccount.Holder == userID)
+                .OrderByDescending(c => c.IssueDate)
+                .Select(c => c.IssueDate)
                 .FirstOrDefaultAsync();
         }
 
         public List<TransactionRecord> GetTransactionRecordsList(int userID)
         {
             return TransactionRecords
-                .Where(t => t.SenderAccount.Holder == userID || t.RecipientAccount.Holder == userID)
+                .Where(tr => tr.SenderAccount.Holder == userID || tr.RecipientAccount.Holder == userID)
                 .ToList();
         }
 
         public Task<List<TransactionRecord>> GetTransactionRecordsListAsync(int userID)
         {
             return TransactionRecords
-                .Where(t => t.SenderAccount.Holder == userID || t.RecipientAccount.Holder == userID)
+                .Where(tr => tr.SenderAccount.Holder == userID || tr.RecipientAccount.Holder == userID)
                 .ToListAsync();
+        }
+
+        public TransactionRecord GetTransactionRecordFromCertificate(string certificate)
+        {
+            return TransactionRecords
+                .Where(tr => tr.Certificate == certificate)
+                .FirstOrDefault();
+        }
+
+        public async Task<TransactionRecord> GetTransactionRecordAsyncFromCertificate(string certificate)
+        {
+            return await TransactionRecords
+                .Where(tr => tr.Certificate == certificate)
+                .FirstOrDefaultAsync();
         }
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
