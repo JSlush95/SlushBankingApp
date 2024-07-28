@@ -1,0 +1,42 @@
+﻿@using Microsoft.AspNetCore.Identity
+
+@if (User.Identity.IsAuthenticated)
+{
+    using (Html.BeginForm("LogOff", "Account", FormMethod.Post, new { id = "logoutForm", @class = "navbar-right" }))
+    {
+        @Html.AntiForgeryToken()
+        <ul class="navbar-nav navbar-right">
+            <li>
+                @Html.ActionLink($"[Welcome, {User.Identity.Name}]", "Index", "Manage", routeValues: null, htmlAttributes: new { title = "Manage", @class="navbar-brand" })
+            </li>
+            <li><a class="navbar-brand" href="javascript:document.getElementById('logoutForm').submit()">[Log Off]</a></li>
+        </ul>
+    }
+}
+else
+{
+    <ul class="navbar-nav navbar-right">
+        @if ((String)ViewContext.RouteData.Values["controller"] == "Account")
+        {
+            if ((String)ViewContext.RouteData.Values["action"] == "Login")
+            {
+                <li>@Html.ActionLink("[Register]", "Register", "Account", routeValues: null, htmlAttributes: new { id = "registerLink", @class = "navbar-brand" })</li>
+            }
+            else if ((String)ViewContext.RouteData.Values["action"] == "Register")
+            {
+                <li>@Html.ActionLink("[Log In]", "Login", "Account", routeValues: null, htmlAttributes: new { id = "loginLink", @class = "navbar-brand" })</li>
+            }
+            else
+            {
+                <li>@Html.ActionLink("[Register]", "Register", "Account", routeValues: null, htmlAttributes: new { id = "registerLink", @class = "navbar-brand" })</li>
+                <li>@Html.ActionLink("[Log In]", "Login", "Account", routeValues: null, htmlAttributes: new { id = "loginLink", @class = "navbar-brand" })</li>
+            }
+        }
+        else
+        {
+            <li>@Html.ActionLink("[Register]", "Register", "Account", routeValues: null, htmlAttributes: new { id = "registerLink", @class = "navbar-brand" })</li>
+            <li>@Html.ActionLink("[Log In]", "Login", "Account", routeValues: null, htmlAttributes: new { id = "loginLink", @class = "navbar-brand" })</li>
+        }
+
+    </ul>
+}

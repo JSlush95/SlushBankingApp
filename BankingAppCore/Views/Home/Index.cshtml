@@ -1,0 +1,57 @@
+﻿@{
+    ViewBag.Title = "About Me";
+}
+
+<head>
+    <link rel="stylesheet" type="text/css" href="~/css/global_background.css" asp-append-version="true" />
+</head>
+
+<main aria-labelledby="title">
+    <section class="row" aria-labelledby="aspnetTitle">
+        <h1 id="title">Slush Banking</h1>
+        <p class="lead">
+            This website is a mockup program that emulates bank account management. It uses C# .NET 8, ASP.Net Core Identity and Entity Framework, with Razor HTML and Bootstrap.<br />
+            As proof that I can make something more than just a simple program, I aimed to create a two-tiered system with real world applications. It is done with a combination of banking and storefront websites.
+        </p>
+    </section>
+    <br /><br />
+    <div class="row">
+        <section class="col-auto" aria-labelledby="gettingStartedTitle">
+            <h2 id="gettingStartedTitle">Getting started</h2>
+            <p>
+                Please enjoy, this system may be a bit flawed, as I am still new to this. This will act as the payment methods for the companion mockup storefront website.
+            </p>
+            <br />
+            <strong>This mockup banking website handles:</strong>
+            <ul>
+                <li>Transfer funds between a user's bank accounts.</li>
+                <li>Management of bank accounts and cards, with banking features such as a % interest on savings accounts and expiration dates for cards.</li>
+                <li>Interact with the companion storefront website to "buy" digital mockup items with a bank card.</li>
+                <li>Changing of credentials like username, password, account alias (used to associate the users between both websites).</li>
+                <li>2 Factor Authenticaton (email), Remember Me, email confirmation, etc.</li>
+            </ul>
+        </section>
+    </div>
+    <br /><br />
+    <header>
+        <h2>@ViewBag.Title</h2>
+    </header>
+
+    <section class="about-section">
+        <p>
+            I am a graduate from Arizona State University under the IRA Fulton Schools of Engineering. I decided to make a banking website to showcase the skills I have learned.<br />
+            This is a companion website to my other one, the storefront website.
+        </p>
+    </section>
+    <br /><br />
+    <section class="contact-section">
+        <h3>Contact Information</h3>
+        <div>
+            <p class="lead">If anything goes wrong, feel free to contact me.</p>
+        </div>
+        <address>
+            <strong>Email Address:</strong> <a href="mailto:JSlush95@gmail.com">JSlush95@gmail.com</a>
+        </address>
+    </section>
+    <br />
+</main>

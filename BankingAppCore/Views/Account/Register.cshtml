@@ -1,0 +1,77 @@
+@using BankingAppCore.Models
+@model RegisterViewModel
+@{
+    ViewBag.Title = "Register";
+}
+<head>
+    <link rel="stylesheet" type="text/css" href="~/css/global_background.css" asp-append-version="true" />
+</head>
+
+<main aria-labelledby="title">
+    <h2 id="title">@ViewBag.Title</h2>
+
+    @using (Html.BeginForm("Register", "Account", FormMethod.Post, new { role = "form" }))
+    {
+        @Html.AntiForgeryToken()
+        <hr />
+        @Html.ValidationSummary("", new { @class = "text-danger" })
+        <div class="row">
+            @Html.LabelFor(m => m.Username, new { @class = "col-md-2 col-form-label" })
+            <div class="col-md-5">
+                @Html.TextBoxFor(m => m.Username, new { @class = "form-control" })
+            </div>
+        </div>
+        <br />
+        <div class="row">
+            @Html.LabelFor(m => m.Email, new { @class = "col-md-2 col-form-label" })
+            <div class="col-md-5">
+                @Html.TextBoxFor(m => m.Email, new { @class = "form-control" })
+            </div>
+        </div>
+        <br />
+        <div class="row">
+            @Html.LabelFor(m => m.Password, new { @class = "col-md-2 col-form-label" })
+            <div class="col-md-5">
+                @Html.PasswordFor(m => m.Password, new { @class = "form-control" })
+            </div>
+        </div>
+        <br />
+        <div class="row">
+            @Html.LabelFor(m => m.ConfirmPassword, new { @class = "col-md-2 col-form-label" })
+            <div class="col-md-5">
+                @Html.PasswordFor(m => m.ConfirmPassword, new { @class = "form-control" })
+            </div>
+        </div>
+        <br />
+        <div class="row">
+            @Html.LabelFor(m => m.UserType, new { @class = "col-md-2 col-form-label" })
+            <div class="col-md-5">
+                @{
+                    var userTypes = Enum.GetValues(typeof(BankingAppCore.Models.UserType))
+                                       .Cast<BankingAppCore.Models.UserType>()
+                                       .Where(e => e == BankingAppCore.Models.UserType.Personal);
+                    var selectList = new SelectList(userTypes);
+                }
+                @Html.DropDownListFor(m => m.UserType, selectList, new { @class = "form-control" })
+            </div>
+        </div>
+        <br />
+        <div class="row">
+            <div class="offset-md-2 col-md-10">
+                <input type="submit" value="Register" class="btn btn-light" />
+            </div>
+        </div>
+        <br />
+        <div class="entry-content">
+            <strong>Rules:</strong>
+            <ul>
+                <li>Email must be in a valid form. It must not be in use already.</li>
+                <li>Username and password must be alphanumeric. </li>
+                <li>Username and password must be at least a length of 6.</li>
+                <li>Passwords must contain at least one non-letter or digit character.</li>
+                <li>Passwords must contain at least one digit ('0'-'9').</li>
+                <li>Passwords must contain at least one uppercase ('A'-'Z').</li>
+            </ul>
+        </div>
+    }
+</main>

@@ -1,0 +1,53 @@
+@using BankingAppCore.Models
+@model ChangeEmailViewModel
+@{
+    ViewBag.Title = "Change Email";
+}
+<head>
+    <link rel="stylesheet" type="text/css" href="~/css/global_background.css" asp-append-version="true" />
+</head>
+
+<main aria-labelledby="title">
+    <h2 id="title">@ViewBag.Title</h2>
+
+    @using (Html.BeginForm("ChangeEmail", "Manage", FormMethod.Post, new { role = "form" }))
+    {
+        @Html.AntiForgeryToken()
+        <hr />
+        @Html.ValidationSummary("", new { @class = "text-danger" })
+        <div class="row">
+            @Html.LabelFor(m => m.OldEmail, new { @class = "col-md-2 col-form-label" })
+            <div class="col-md-5">
+                @Html.TextBoxFor(m => m.OldEmail, new { @class = "form-control" })
+            </div>
+        </div>
+        <br />
+        <div class="row">
+            @Html.LabelFor(m => m.NewEmail, new { @class = "col-md-2 col-form-label" })
+            <div class="col-md-5">
+                @Html.TextBoxFor(m => m.NewEmail, new { @class = "form-control" })
+            </div>
+        </div>
+        <br />
+        <div class="row">
+            @Html.LabelFor(m => m.ConfirmEmail, new { @class = "col-md-2 col-form-label" })
+            <div class="col-md-5">
+                @Html.TextBoxFor(m => m.ConfirmEmail, new { @class = "form-control" })
+            </div>
+        </div>
+        <br />
+        <div class="row">
+            <div class="offset-md-2 col-md-10">
+                <input type="submit" value="Change" class="btn btn-light" />
+            </div>
+        </div>
+    }
+    <br />
+    <div class="entry-content">
+        <strong>Rules:</strong>
+        <ul>
+            <li>Current email must be correct.</li>
+            <li>Email must be in a valid form.</li>
+        </ul>
+    </div>
+</main>

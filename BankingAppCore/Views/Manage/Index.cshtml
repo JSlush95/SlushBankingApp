@@ -1,0 +1,195 @@
+﻿@using BankingAppCore.Models
+@model IndexViewModel
+@{
+    ViewBag.Title = "Manage";
+}
+<head>
+    <link rel="stylesheet" type="text/css" href="~/css/global_background.css" asp-append-version="true" />
+</head>
+
+<main aria-labelledby="title">
+
+    <p class="text-success">@ViewBag.StatusMessage</p>
+    <div>
+        <h3>General Account Settings</h3>
+        <hr />
+        <dl class="dl-horizontal">
+            <dt>Username:</dt>
+            <dd>
+                @Html.ActionLink("Change Username", "ChangeUsername")
+            </dd>
+            <dt>Email:</dt>
+            <dd>
+                @Html.ActionLink("Change Email", "ChangeEmail")
+            </dd>
+            <dt>Password:</dt>
+            <dd>
+                @if (Model.HasPassword)
+                {
+                    @Html.ActionLink("Change Password", "ChangePassword")
+                }
+                else
+                {
+                    @Html.ActionLink("Create", "SetPassword")
+                }
+                @if (!Model.EmailConfirmed)
+                {
+                    <br /><br />
+                    <strong>Unconfirmed Account:</strong>
+                    <ul>
+                        <li>Cannot use the banking system until your account is confirmed.</li>
+                        <li>If the email provided does not work, change it above.</li>
+                        <li>Confirmed accounts are required to use the "forgot password" feature.</li>
+                    </ul>
+                    using (Html.BeginForm("ResendConfirmationEmail", "Account", FormMethod.Post, new { role = "form" }))
+                    {
+                        @Html.AntiForgeryToken()
+                        @Html.ValidationSummary("", new { @class = "text-danger" })
+                        <div class="row justify-content-start">
+                            <div class="col-auto">
+                                <input type="submit" value="Resend Confirmation Email" class="btn btn-light" />
+                            </div>
+                        </div>
+                    }
+                    <br />
+                }
+            </dd>
+            <br /><br />
+            <div class="container-md">
+                @if (!Model.AccountAliasSet)
+                {
+                    <strong>Account Alias Not Set:</strong>
+                    <ul>
+                        <li>An account alias is required to connect to the companion store website.</li>
+                        <li>The account alias must match the one used in the companion store website.</li>
+                        <li>The account alias must not be in use already.</li>
+                    </ul>
+                }
+                else
+                {
+                    <strong>Alias Note</strong>
+                    <ul>
+                        <li>An account alias is used to connect to the companion store website.</li>
+                        <li>The alias must match the one used in the companion website.</li>
+                    </ul>
+                    <details>
+                        <p class="lead">
+                            <summary>Account Alias:</summary>
+                            &emsp;@Model.AccountAlias
+                        </p>
+                    </details>
+                }
+                @using (Html.BeginForm("SetAccountAlias", "Manage", FormMethod.Post, new { role = "form" }))
+                {
+                    @Html.AntiForgeryToken()
+                    @Html.ValidationSummary("", new { @class = "text-danger" })
+                    <div class="row">
+                        @Html.LabelFor(m => m.AliasFormInput, new { @class = "col-md-1 col-form-label" })
+                        <div class="col-md-5">
+                            @Html.TextBoxFor(m => m.AliasFormInput, new { @class = "form-control", required = "required" })
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="offset-md-1 col-md-10">
+                            @if (!Model.AccountAliasSet)
+                            {
+                                <input type="submit" value="Set Alias" class="btn btn-light" />
+                            }
+                            else
+                            {
+                                <input type="submit" value="Change Alias" class="btn btn-light" />
+                            }
+
+                        </div>
+                    </div>
+                    <br />
+                }
+            </div>
+            <br />
+            <br />
+            <dt>Two-Factor Authentication:</dt>
+            <dd>
+                @if (Model.TwoFactor)
+                {
+                    using (Html.BeginForm("DisableTwoFactorAuthentication", "Manage", FormMethod.Post, new { @class = "form-horizontal", role = "form" }))
+                    {
+                        @Html.AntiForgeryToken()
+                        <text><mark>Enabled</mark>
+                            <input type="submit" value="Disable" class="btn btn-link" id="two-FA-link" />
+                        </text>
+                    }
+                }
+                else
+                {
+                    using (Html.BeginForm("EnableTwoFactorAuthentication", "Manage", FormMethod.Post, new { @class = "form-horizontal", role = "form" }))
+                    {
+                        @Html.AntiForgeryToken()
+                        <text><mark>Disabled</mark>
+                            <input type="submit" value="Enable" class="btn btn-link" id="two-FA-link" />
+                        </text>
+                    }
+                }
+            </dd>
+            <br />
+        </dl>
+    </div>
+    @if (ViewBag.Message != null)
+    {
+        <div class="alert alert-light" role="alert">
+            @ViewBag.Message
+        </div>
+    }
+    <br />
+    <h3>Bank Account Settings</h3>
+    <hr />
+    <div class="container mt-3">
+        <!-- Nav tabs -->
+        <ul class="nav nav-tabs mb-auto" id="nav-tab">
+            <li class="nav-item">
+                <a class="nav-link active" id="nav-tab-view-accounts" data-bs-toggle="tab" href="#view-accounts" role="tab" aria-controls="view-accounts" aria-selected="true">Current Bank Accounts</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="nav-tab-view-transfers" data-bs-toggle="tab" href="#transfer-funds" role="tab" aria-controls="transfer-funds" aria-selected="false">Current Transactions</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="nav-tab-create-account" data-bs-toggle="tab" href="#create-account" role="tab" aria-controls="create-account" aria-selected="false">Create Bank Account</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="nav-tab-create-card" data-bs-toggle="tab" href="#create-card" role="tab" aria-controls="create-card" aria-selected="false">Create Card</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="nav-tab-transfer" data-bs-toggle="tab" href="#transfer" role="tab" aria-controls="transfer" aria-selected="false">Transfer Funds</a>
+            </li>
+        </ul>
+
+        <!-- Tab panes -->
+        <div class="tab-content" id="nav-tabContent">
+            <div class="tab-pane fade show active" id="view-accounts" role="tabpanel" aria-labelledby="nav-tab-view-accounts">
+                <div id="view-accounts-content">
+                    @{ await Html.RenderPartialAsync("_ViewAccountsPartial", @Model.DisplayAccountInfoViewModel); }
+                </div>
+            </div>
+            <div class="tab-pane fade" id="transfer-funds" role="tabpanel" aria-labelledby="nav-tab-view-transfers">
+                <div id="view-transfers-content">
+                    @{ await Html.RenderPartialAsync("_ViewTransfersPartial", @Model.DisplayTransferInfoViewModel); }
+                </div>
+            </div>
+            <div class="tab-pane fade" id="create-account" role="tabpanel" aria-labelledby="nav-tab-create-account">
+                <div id="create-account-content">
+                    @{ await Html.RenderPartialAsync("_CreateAccountPartial", Model.CreateAccountViewModel); }
+                </div>
+            </div>
+            <div class="tab-pane fade" id="create-card" role="tabpanel" aria-labelledby="nav-tab-create-card">
+                <div id="create-card-content">
+                    @{ await Html.RenderPartialAsync("_CreateCardPartial", @Model.CreateCardViewModel); }
+                </div>
+            </div>
+            <div class="tab-pane fade" id="transfer" role="tabpanel" aria-labelledby="nav-tab-transfer">
+                <div id="create-card-content">
+                    @{ await Html.RenderPartialAsync("_TransferPartial", @Model.TransferFundsViewModel); }
+                </div>
+            </div>
+        </div>
+    </div>
+    <br />
+</main>

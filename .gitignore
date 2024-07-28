@@ -364,3 +364,4 @@ FodyWeavers.xsd
 /BankingApp/appsettings.json
 /BankingApp/AppSecrets.config
 /BankingApp/AppSettingsSecrets.config
+/BankingAppCore/secrets.json
