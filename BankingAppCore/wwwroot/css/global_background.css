@@ -1,0 +1,104 @@
+﻿body {
+    background: url(/images/triangles-bg-1.png);
+    background-repeat: no-repeat;
+    background-size: cover;
+    height: 100vh 100%;
+}
+
+html {
+    height: auto;
+}
+
+* {
+    color: white;
+}
+
+.container {
+    padding-top: 5px;
+}
+
+select, .form-control {
+    color: black;
+    background-color: white;
+}
+
+select option {
+    color: black;
+    background-color: white;
+}
+
+.text-success {
+    background-color: darkslategray;
+    color:white !important;
+    text-align:center
+}
+
+.table td {
+    color: green;
+}
+
+.nav {
+    background-color: darkslategray;
+}
+
+.tab-content {
+    background-color: rgba(86,61,124,0.15);
+    border: 1px solid rgba(86,61,124,0.15);
+    padding: 2em;
+}
+
+.text-danger.validation-summary-errors li, #Password-error, #Username-error{
+    color: red;
+}
+
+a {
+    color: #9eff9e;
+    text-decoration: none;
+}
+
+mark {
+    color: #000;
+}
+
+a:hover {
+    color: #ffffcc;
+}
+
+#nav-tab .nav-link:not(.active) {
+    color: #9eff9e;
+    text-decoration: none;
+}
+
+#nav-tab .nav-link:not(.active):hover {
+    color: #ffffcc;
+}
+
+#two-FA-link.btn.btn-link {
+    color: #9eff9e;
+    text-decoration: none;
+}
+
+#two-FA-link.btn.btn-link:hover {
+    color: #ffffcc;
+}
+
+/* The "spoiler" tag for the account alias. */
+details {
+    background-color: darkslategray;
+    border: 1px solid #2ecc71;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+summary {
+    color: #00ff21;
+    cursor: pointer;
+}
+
+summary:hover {
+    color: #ffffcc;
+}
+
+details {
+    color:#15b972;
+}

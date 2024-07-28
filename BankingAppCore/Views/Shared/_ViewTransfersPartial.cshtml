@@ -1,0 +1,64 @@
+﻿@using BankingAppCore.Models
+@model DisplayTransferInfoViewModel
+@functions {
+    // The Account ID can be possible sensitive data, so the string needs to be formatted accordingly.
+    string GetToAccountField(TransactionRecord? record)
+    {
+        if (record.TransactionType is TransactionType.Refund)
+        {
+            return $"{record.SenderAccount.User.UserName}";
+        }else if (record.TransactionType is TransactionType.Interest)
+        {
+            return "Banking System";
+        }
+
+        return $"{record.SenderAccount.User.UserName} - ACCT ID#{record.Sender}";
+    }
+
+    // The Account ID can be possible sensitive data, so the string needs to be formatted accordingly.
+    string GetFromAccountField(TransactionRecord? record)
+    {
+        if (record.TransactionType is TransactionType.Purchase)
+        {
+            return $"{record.RecipientAccount.User.UserName}";
+        }
+
+        return $"{record.RecipientAccount.User.UserName} - ACCT ID#{record.Recipient}";
+    }
+}
+
+@if (Model.Transactions == null || !Model.Transactions.Any())
+{
+    <div class="alert alert-light" role="alert">
+        Could not find any transfer data. Please create some.
+    </div>
+}
+else
+{
+    <div class="overflow-auto" style="max-height: 600px; border: 1px solid #ddd; padding: 8px;">
+        <table class="table table-striped table-hover table-success">
+            <thead>
+                <tr class="table-dark">
+                    <th scope="col">Transaction Type</th>
+                    <th scope="col">From Account</th>
+                    <th scope="col">To Account</th>
+                    <th scope="col">Amount</th>
+                    <th scope="col">Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var record in Model.Transactions)
+                {
+                    <tr>
+                        <td>@record.TransactionType</td>
+                        <td>@GetToAccountField(record)</td>
+                        <td>@GetFromAccountField(record)</td>
+                        <td>@record.Amount</td>
+                        <td>@record.Description</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+

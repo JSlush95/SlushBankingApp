@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" asp-append-version="true" />
+    <title>@ViewBag.Title - Slush Banking</title>
+</head>
+<body>
+    <nav class="navbar navbar-expand-sm navbar-toggleable-sm" style="background-color:darkslategray">
+        <div class="container">
+            
+        @Html.ActionLink("[About]", "Index", "Home", new { area = "" }, new { @class = "navbar-brand" })
+         <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" title="Toggle navigation" aria-controls="navbarSupportedContent"
+                 aria-expanded="false" aria-label="Toggle navigation">
+             <span class="navbar-toggler-icon"></span>
+         </button>
+            
+        <div class="collapse navbar-collapse justify-content-end">
+            <partial name="_LoginPartial" />
+        </div>
+        </div>
+    </nav>
+    <div class="container body-content">
+        @RenderBody()
+        <hr />
+        <footer>
+            <p>@DateTime.Now - Slush Banking</p>
+        </footer>
+    </div>
+
+    <!-- jQuery -->
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    @RenderSection("scripts", required: false)
+</body>
+</html>

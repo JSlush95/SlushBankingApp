@@ -1,0 +1,27 @@
+@using BankingAppCore.Models
+@model SendCodeViewModel
+@{
+    ViewBag.Title = "Send Verification Code";
+}
+<head>
+    <link rel="stylesheet" type="text/css" href="~/css/global_background.css" asp-append-version="true" />
+</head>
+
+<main aria-labelledby="title">
+    <h2 id="title">@ViewBag.Title</h2>
+
+    @using (Html.BeginForm("SendCode", "Account", new { ReturnUrl = Model.ReturnUrl }, FormMethod.Post, true, new { role = "form" })) {
+        @Html.Hidden("rememberMe", Model.RememberMe)
+        @Html.HiddenFor(m => m.Providers)
+        <hr />
+        <div class="row">
+            <div class="col-md-8">
+                Select Two-Factor Authentication Provider:
+                <br /><br />
+                @Html.DropDownListFor(model => model.SelectedProvider, Model.Providers)
+                <input type="submit" value="Submit" class="btn btn-light" />
+            </div>
+        </div>
+        <br />
+    }
+</main>

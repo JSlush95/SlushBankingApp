@@ -1,0 +1,53 @@
+﻿@using BankingAppCore.Models
+@model CreateCardViewModel
+<div>
+    <h3><u>Create a Card</u></h3>
+    <br />
+    @using (Html.BeginForm("CreateCard", "Manage", FormMethod.Post))
+    {
+        @Html.AntiForgeryToken()
+        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+        @Html.HiddenFor(m => m.BankAccounts);
+        <div class="form-group">
+            <div class="col-md-3">
+                @Html.LabelFor(m => m.SelectedAccountID, new { @class = "col-md-5 col-form-label" })
+                @Html.DropDownListFor(m => m.SelectedAccountID, Model.BankAccounts, "Select Account", new { @class = "form-control" })
+            </div>
+            @Html.ValidationMessageFor(m => m.SelectedAccountID, "", new { @class = "text-danger" })
+        </div>
+        <br />
+        <div class="form-group">
+            <div class="col-md-1">
+                @Html.LabelFor(m => m.KeyPIN, new { @class = "col-form-label" })
+                @Html.TextBoxFor(m => m.KeyPIN, new { @class = "form-control", maxLength = 5 })
+            </div>
+            @Html.ValidationMessageFor(m => m.KeyPIN, "", new { @class = "text-danger" })
+        </div>
+        <br />
+        <div class="form-group">
+            <div class="col-md-1">
+                @Html.LabelFor(m => m.CardType, new { @class = "col-form-label" })
+                @{
+                    var cardTypes = Enum.GetValues(typeof(BankingAppCore.Models.CardType))
+                    .Cast<BankingAppCore.Models.CardType>()
+                    .Where(e => e == BankingAppCore.Models.CardType.Debit);
+                    var selectList = new SelectList(cardTypes);
+                }
+                @Html.DropDownListFor(m => m.CardType, selectList, new { @class = "form-control" })
+            </div>
+            @Html.ValidationMessageFor(m => m.CardType, "", new { @class = "text-danger" })
+        </div>
+        <br />
+        <button type="submit" class="btn btn-light">Create Card</button>
+        <br /><br /><br />
+        <div class="entry-content">
+            <strong>Rules:</strong>
+            <ul>
+                <li>If there are no accounts, nothing is selectable.</li>
+                <li>The KeyPIN must be a non-decimal, non-negative number with 5 digits. This is used to validate purchases from the companion store website.</li>
+                <li>An account must be selected.</li>
+            </ul>
+        </div>
+    }
+</div>
+

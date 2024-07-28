@@ -1,0 +1,54 @@
+@using BankingAppCore.Models
+@model ChangeUsernameViewModel
+@{
+    ViewBag.Title = "Change Username";
+}
+<head>
+    <link rel="stylesheet" type="text/css" href="~/css/global_background.css" asp-append-version="true" />
+</head>
+
+<main aria-labelledby="title">
+    <h2 id="title">@ViewBag.Title</h2>
+
+    @using (Html.BeginForm("ChangeUsername", "Manage", FormMethod.Post, new { role = "form" }))
+    {
+        @Html.AntiForgeryToken()
+        <hr />
+        @Html.ValidationSummary("", new { @class = "text-danger" })
+        <div class="row">
+            @Html.LabelFor(m => m.OldUsername, new { @class = "col-md-2 col-form-label" })
+            <div class="col-md-5">
+                @Html.TextBoxFor(m => m.OldUsername, new { @class = "form-control" })
+            </div>
+        </div>
+        <br />
+        <div class="row">
+            @Html.LabelFor(m => m.NewUsername, new { @class = "col-md-2 col-form-label" })
+            <div class="col-md-5">
+                @Html.TextBoxFor(m => m.NewUsername, new { @class = "form-control" })
+            </div>
+        </div>
+        <br />
+        <div class="row">
+            @Html.LabelFor(m => m.ConfirmUsername, new { @class = "col-md-2 col-form-label" })
+            <div class="col-md-5">
+                @Html.TextBoxFor(m => m.ConfirmUsername, new { @class = "form-control" })
+            </div>
+        </div>
+        <br />
+        <div class="row">
+            <div class="offset-md-2 col-md-10">
+                <input type="submit" value="Change" class="btn btn-light" />
+            </div>
+        </div>
+    }
+    <br />
+    <div class="entry-content">
+        <strong>Rules:</strong>
+        <ul>
+            <li>Usernames are case-sensitive. </li>
+            <li>Usernames must be alphanumeric. </li>
+            <li>Usernames must be at least a length of 6.</li>
+        </ul>
+    </div>
+</main>
