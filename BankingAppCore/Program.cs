@@ -9,12 +9,31 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using System.Reflection;
 using BankingAppCore.Controllers;
 using BankingAppCore.Services;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+var supabaseConnectionString = builder.Configuration.GetConnectionString("SupabaseConnection") ?? throw new InvalidOperationException("Connection string 'SupabaseConnection' not found.");
+var provider = builder.Configuration.GetValue<string>("DatabaseProvider") ?? throw new InvalidOperationException("Database provider not configured.");
+
+// Dynamically choose the provider for multiple providers and their migrations for EF Core
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));
+{
+    switch (provider)
+    {
+        case "SqlServer":
+            options.UseSqlServer(connectionString);
+            break;
+        case "Postgresql":
+            options.UseNpgsql(supabaseConnectionString);
+            break;
+        default:
+            throw new InvalidOperationException($"Unsupported provider: {provider}");
+    }
+});
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
