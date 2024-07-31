@@ -24,14 +24,17 @@ namespace BankingAppCore.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            // Customize the table names by using EF's Fluent API.
             modelBuilder.Entity<User>().Property(u => u.Id).HasColumnName("UserID");
             modelBuilder.Entity<User>().ToTable("Users");
             modelBuilder.Entity<Card>().HasIndex(c => c.CardNumber).IsUnique();
+            modelBuilder.Entity<Card>().HasIndex(c => c.CardID).IsUnique();
 
             
             modelBuilder.Entity<TransactionRecord>(entity =>
             {
+                entity.HasIndex(tr => tr.TransactionID)
+                    .IsUnique();
+
                 // Prevent cascade delete on multi-pathed entities for both related accounts
                 entity.HasOne(tr => tr.SenderAccount)
                     .WithMany()
@@ -52,7 +55,7 @@ namespace BankingAppCore.Data
                 .Property(ba => ba.PermissionKey)
                 .IsRequired(false);
 
-            // Enabling multiple constraint on User entity
+            // Enabling multiple constraints on User entity
             modelBuilder.Entity<User>(entity =>
             {
                 entity.HasIndex(u => u.Email)
@@ -66,6 +69,15 @@ namespace BankingAppCore.Data
 
                 entity.Property(e => e.LastName)
                     .IsRequired(false);
+
+                entity.Property(u => u.Id)
+                    .UseIdentityColumn();
+
+                entity.HasIndex(u => u.Id)
+                    .IsUnique();
+
+                entity.Property(u => u.Id)
+                .UseIdentityColumn();
             });
         }
 

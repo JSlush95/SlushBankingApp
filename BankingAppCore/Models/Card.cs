@@ -11,6 +11,7 @@ namespace BankingAppCore.Models
     public class Card
     {
         [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int CardID { get; set; }
         [Required]
         public CardType CardType { get; set; }

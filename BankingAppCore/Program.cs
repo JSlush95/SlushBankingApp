@@ -13,25 +13,26 @@ using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-var supabaseConnectionString = builder.Configuration.GetConnectionString("SupabaseConnection") ?? throw new InvalidOperationException("Connection string 'SupabaseConnection' not found.");
-var provider = builder.Configuration.GetValue<string>("DatabaseProvider") ?? throw new InvalidOperationException("Database provider not configured.");
+builder.Configuration.AddEnvironmentVariables();
 
-// Dynamically choose the provider for multiple providers and their migrations for EF Core
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
+var databaseConnection = Environment.GetEnvironmentVariable("CUSTOMCONNSTR_DBConnection") ?? throw new InvalidOperationException("Connection string base 'DBConnection' not found.");
+var certificatePath = Environment.GetEnvironmentVariable("ROOT_CERTIFICATE_PATH") ?? throw new InvalidOperationException("Certificate path not found.");
+
+// Combining with the web root path to get the absolute path
+var rootCertificateAbsolutePath = Path.Combine(builder.Environment.WebRootPath, certificatePath);
+
+// Validating the certificate path
+if (!File.Exists(rootCertificateAbsolutePath))
 {
-    switch (provider)
-    {
-        case "SqlServer":
-            options.UseSqlServer(connectionString);
-            break;
-        case "Postgresql":
-            options.UseNpgsql(supabaseConnectionString);
-            break;
-        default:
-            throw new InvalidOperationException($"Unsupported provider: {provider}");
-    }
-});
+    throw new FileNotFoundException("Root certificate file not found.", rootCertificateAbsolutePath);
+}
+
+var connectionString = databaseConnection + "SSLMode=Require;Trust Server Certificate=false;Root Certificate=" + rootCertificateAbsolutePath + ";Include Error Detail=true;";
+
+// Binding the appsettings.json section to a POCO class
+builder.Services.Configure<AppSettings>(builder.Configuration.GetSection("AppSettings"));
+
+builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(connectionString));
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 
@@ -81,11 +82,7 @@ builder.Services.AddTransient<IEmailSender, EmailService>();
 // Add configuration from appsettings.json and secrets.json
 builder.Configuration
     .SetBasePath(Directory.GetCurrentDirectory())
-    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-    .AddJsonFile("secrets.json", optional: true, reloadOnChange: true);
-
-// Binding the appsettings.json section to a POCO class
-builder.Services.Configure<AppSettings>(builder.Configuration.GetSection("AppSettings"));
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
 
 // Registering the AuthorizeAliasHandler and Cryptography classes
 builder.Services.AddScoped<IAuthorizationHandler, AuthorizeAliasHandler>();

@@ -261,7 +261,7 @@ namespace BankingAppCore.Controllers
 
                     if (timeRemaining > TimeSpan.Zero)
                     {
-                        TempData["Message"] = $"Please wait {timeRemaining} before creating a new account.";
+                        TempData["Message"] = $"Please wait {timeRemaining.TotalSeconds} before creating a new account.";
                         return RedirectToAction(nameof(Index));
                     }
                 }
@@ -315,7 +315,7 @@ namespace BankingAppCore.Controllers
                             await _dbContext.SaveChangesAsync();
                             await transactionContext.CommitAsync();
 
-                            TempData["Message"] = $"Success with adding {amount:C} to AccountID {accountID}";
+                            TempData["Message"] = $"Success with adding {amount} to AccountID: {accountID}";
                         }
                         catch
                         {
@@ -397,7 +397,7 @@ namespace BankingAppCore.Controllers
 
                     if (timeRemaining > TimeSpan.Zero)
                     {
-                        TempData["Message"] = $"Please wait {timeRemaining} before creating a new card.";
+                        TempData["Message"] = $"Please wait {timeRemaining.TotalSeconds} before creating a new card.";
                         return RedirectToAction(nameof(Index));
                     }
                 }

@@ -11,6 +11,7 @@ namespace BankingAppCore.Models
     public class TransactionRecord
     {
         [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int TransactionID { get; set; }
         [Required]
         public int Sender { get; set; }

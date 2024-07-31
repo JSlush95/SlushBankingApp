@@ -11,6 +11,7 @@ namespace BankingAppCore.Models
     public class BankAccount
     {
         [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int AccountID { get; set; }
         [Required]
         [Column(TypeName = "decimal(18, 2)")]

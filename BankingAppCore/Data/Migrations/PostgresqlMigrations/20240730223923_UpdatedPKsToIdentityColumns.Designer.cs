@@ -3,17 +3,20 @@ using System;
 using BankingAppCore.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace BankingAppCore.Data.Migrations.PostgresqlMigrations
+namespace SlushBanking.Data.Migrations.PostgresqlMigrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240730223923_UpdatedPKsToIdentityColumns")]
+    partial class UpdatedPKsToIdentityColumns
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -93,9 +96,6 @@ namespace BankingAppCore.Data.Migrations.PostgresqlMigrations
 
                     b.HasIndex("AssociatedAccount");
 
-                    b.HasIndex("CardID")
-                        .IsUnique();
-
                     b.HasIndex("CardNumber")
                         .IsUnique();
 
@@ -140,9 +140,6 @@ namespace BankingAppCore.Data.Migrations.PostgresqlMigrations
                     b.HasIndex("Recipient");
 
                     b.HasIndex("Sender");
-
-                    b.HasIndex("TransactionID")
-                        .IsUnique();
 
                     b.ToTable("TransactionRecords");
                 });
@@ -224,9 +221,6 @@ namespace BankingAppCore.Data.Migrations.PostgresqlMigrations
                     b.HasKey("Id");
 
                     b.HasIndex("Email")
-                        .IsUnique();
-
-                    b.HasIndex("Id")
                         .IsUnique();
 
                     b.HasIndex("NormalizedEmail")
