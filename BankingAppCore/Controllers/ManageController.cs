@@ -157,6 +157,11 @@ namespace BankingAppCore.Controllers
                 ViewBag.Message = TempData["Message"];
             }
 
+            if (TempData.ContainsKey("2FAMessage"))
+            {
+                ViewBag.Message2FA = TempData["2FAMessage"];
+            }
+
             IndexViewModel model = await CreateIndexViewModel();
             model.CreateAccountViewModel = new CreateAccountViewModel();
             model.CreateCardViewModel = new CreateCardViewModel
@@ -541,6 +546,12 @@ namespace BankingAppCore.Controllers
                 return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
             }
 
+            if (!user.EmailConfirmed)
+            {
+                TempData["2FAMessage"] = "Email must be confirmed for 2FA.";
+                return RedirectToAction("Index", "Manage");
+            }
+
             await _userManager.SetTwoFactorEnabledAsync(user, true);
             var code = await _userManager.GenerateTwoFactorTokenAsync(user, TokenOptions.DefaultEmailProvider);
 
@@ -550,7 +561,6 @@ namespace BankingAppCore.Controllers
             }
 
             await _signInManager.RefreshSignInAsync(user);
-            //await _emailService.SendEmailAsync(user.Email, "Your 2FA Code", $"Your 2FA code is {code}");
 
             return RedirectToAction("Index", "Manage");
         }

@@ -13,36 +13,36 @@
     <div>
         <h3>General Account Settings</h3>
         <hr />
-        <dl class="dl-horizontal">
-            <dt>Username:</dt>
-            <dd>
-                @Html.ActionLink("Change Username", "ChangeUsername")
-            </dd>
-            <dt>Email:</dt>
-            <dd>
-                @Html.ActionLink("Change Email", "ChangeEmail")
-            </dd>
-            <dt>Password:</dt>
-            <dd>
-                @if (Model.HasPassword)
-                {
-                    @Html.ActionLink("Change Password", "ChangePassword")
-                }
-                else
-                {
-                    @Html.ActionLink("Create", "SetPassword")
-                }
+        <div class="container">
+            <div class="row">
+                <div class="col">
+                    <ul>
+                        <p class="lead">Change Credentials:</p>
+                        <li><strong>@Html.ActionLink("Change Username", "ChangeUsername")</strong></li>
+                        <li><strong>@Html.ActionLink("Change Email", "ChangeEmail")</strong></li>
+                        <li>
+                        @if (Model.HasPassword)
+                        {
+                            <strong>@Html.ActionLink("Change Password", "ChangePassword")</strong>
+                        }
+                        else
+                        {
+                            <strong>@Html.ActionLink("Create Password", "SetPassword")</strong>
+                        }
+                        </li>
+                    </ul>
+                </div>
                 @if (!Model.EmailConfirmed)
                 {
-                    <br /><br />
-                    <strong>Unconfirmed Account:</strong>
-                    <ul>
-                        <li>Cannot use the banking system until your account is confirmed.</li>
-                        <li>If the email provided does not work, change it above.</li>
-                        <li>Confirmed accounts are required to use the "forgot password" feature.</li>
-                    </ul>
-                    using (Html.BeginForm("ResendConfirmationEmail", "Account", FormMethod.Post, new { role = "form" }))
-                    {
+                    <div class="col">
+                        <p class="lead">Unconfirmed Account:</p>
+                        <ul>
+                            <li>Cannot use the banking system until your account is confirmed.</li>
+                            <li>If the email provided does not work, change it above.</li>
+                            <li>Confirmed accounts are required to use the "forgot password" feature.</li>
+                        </ul>
+                        @using (Html.BeginForm("ResendConfirmationEmail", "Account", FormMethod.Post, new { role = "form" }))
+                        {
                         @Html.AntiForgeryToken()
                         @Html.ValidationSummary("", new { @class = "text-danger" })
                         <div class="row justify-content-start">
@@ -50,27 +50,26 @@
                                 <input type="submit" value="Resend Confirmation Email" class="btn btn-light" />
                             </div>
                         </div>
-                    }
-                    <br />
+                        }
+                    </div>
                 }
-            </dd>
+            </div>
             <br /><br />
             <div class="container-md">
                 @if (!Model.AccountAliasSet)
                 {
                     <strong>Account Alias Not Set:</strong>
                     <ul>
-                        <li>An account alias is required to connect to the companion store website.</li>
-                        <li>The account alias must match the one used in the companion store website.</li>
-                        <li>The account alias must not be in use already.</li>
+                        <li>An account alias is required to connect to the companion store website. It must match your other <a href="https://slushstore20240729193313.azurewebsites.net/">Slush Store</a> alias.</li>
+                        <li>An account alias cannot already be in use, make it strong. <strong>Alphanumeric characters only.</strong></li>
                     </ul>
                 }
                 else
                 {
                     <strong>Alias Note</strong>
                     <ul>
-                        <li>An account alias is used to connect to the companion store website.</li>
-                        <li>The alias must match the one used in the companion website.</li>
+                        <li>An account alias is used to connect to the companion <a href="https://slushstore20240729193313.azurewebsites.net/">Slush Store</a> website.</li>
+                        <li>The alias must be unique and alphanumeric only.</li>
                     </ul>
                     <details>
                         <p class="lead">
@@ -106,9 +105,11 @@
                 }
             </div>
             <br />
-            <br />
-            <dt>Two-Factor Authentication:</dt>
-            <dd>
+            <strong>Two-Factor Authentication:</strong>
+            <ul>
+                <li>Email Only. A valid email is needed for this feature.</li>
+                <li>2FA is in effect on subsequent login(s) when activated.</li>
+            </ul>
                 @if (Model.TwoFactor)
                 {
                     using (Html.BeginForm("DisableTwoFactorAuthentication", "Manage", FormMethod.Post, new { @class = "form-horizontal", role = "form" }))
@@ -124,14 +125,21 @@
                     using (Html.BeginForm("EnableTwoFactorAuthentication", "Manage", FormMethod.Post, new { @class = "form-horizontal", role = "form" }))
                     {
                         @Html.AntiForgeryToken()
+                        @Html.ValidationSummary("", new { @class = "text-danger" })
                         <text><mark>Disabled</mark>
                             <input type="submit" value="Enable" class="btn btn-link" id="two-FA-link" />
                         </text>
                     }
                 }
-            </dd>
+                @if (ViewBag.Message2FA != null)
+                {
+                    <br />
+                    <div class="alert alert-light w-25 h-25" role="alert">
+                        @ViewBag.Message2FA
+                    </div>
+                }
             <br />
-        </dl>
+        </div>
     </div>
     @if (ViewBag.Message != null)
     {
