@@ -8,17 +8,21 @@
         @Html.AntiForgeryToken()
         @Html.ValidationSummary(true, "", new { @class = "text-danger" })
         <div class="form-group">
-            @Html.LabelFor(m => m.AccountType, new { @class = "col-md-2 col-form-label" })
-            <select asp-for="AccountType" class="form-control" asp-items="Html.GetEnumSelectList<BankingAppCore.Models.AccountType>()">
-                <option value="">Select Type</option>
-            </select>
             @Html.ValidationMessageFor(m => m.AccountType, "", new { @class = "text-danger" })
+            <div class="col-md-3">
+                @Html.LabelFor(m => m.AccountType, new { @class = "col-form-label" })
+                <select asp-for="AccountType" class="form-control" asp-items="Html.GetEnumSelectList<BankingAppCore.Models.AccountType>()">
+                    <option value="">Select Type</option>
+                </select>
+            </div>
         </div>
         <br />
         <div class="form-group">
-            @Html.LabelFor(m => m.Balance, new { @class = "col-md-2 col-form-label" })
-            @Html.TextBoxFor(m => m.Balance, new { @class = "form-control" })
             @Html.ValidationMessageFor(m => m.Balance, "", new { @class = "text-danger" })
+            <div class="col-md-3">
+                @Html.LabelFor(m => m.Balance, new { @class = "col-form-label" })
+                @Html.TextBoxFor(m => m.Balance, new { @class = "form-control" })
+            </div>
         </div>
         <br />
         <button type="submit" class="btn btn-light">Create Account</button>

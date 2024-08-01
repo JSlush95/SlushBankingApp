@@ -162,6 +162,11 @@ namespace BankingAppCore.Controllers
                 ViewBag.Message2FA = TempData["2FAMessage"];
             }
 
+            if (TempData.ContainsKey("AliasChangeMessage"))
+            {
+                ViewBag.MessageAliasChange = TempData["AliasChangeMessage"];
+            }
+
             IndexViewModel model = await CreateIndexViewModel();
             model.CreateAccountViewModel = new CreateAccountViewModel();
             model.CreateCardViewModel = new CreateCardViewModel
@@ -213,6 +218,12 @@ namespace BankingAppCore.Controllers
             {
                 TempData["Message"] = "Alias already exists, choose another.";
                 return RedirectToAction(nameof(Index));
+            }
+
+            if (aliasFormInput.Any(x => !char.IsLetterOrDigit(x) || char.IsWhiteSpace(x)))
+            {
+                TempData["AliasChangeMessage"] = "Only alphanumeric characters, please.";
+                return RedirectToAction(nameof(ManageController.Index));
             }
 
             if (user != null)
