@@ -109,7 +109,7 @@ namespace BankingAppCore.Models
 
         [Required(ErrorMessage = "Please enter the amount to transfer")]
         [Display(Name = "Balance")]
-        public decimal Balance { get; set; }
+        public decimal? Balance { get; set; }
     }
 
     public class CreateCardViewModel
@@ -143,7 +143,7 @@ namespace BankingAppCore.Models
         [Required(ErrorMessage = "Please enter the amount to transfer")]
         [Range(0.01, Double.MaxValue, ErrorMessage = "Please enter a valid amount")]
         [Display(Name = "Amount")]
-        public decimal Amount { get; set; }
+        public decimal? Amount { get; set; }
 
         public IEnumerable<SelectListItem> SourceAccounts { get; set; }
         public IEnumerable<SelectListItem> DestinationAccounts { get; set; }

@@ -251,6 +251,7 @@ namespace BankingAppCore.Controllers
         {
             int? userId = GetCurrentUserId();
             User user = await GetCurrentUserAsync(userId);
+            var balance = model.Balance.GetValueOrDefault();
 
             if (!ModelState.IsValid)
             {
@@ -260,10 +261,16 @@ namespace BankingAppCore.Controllers
 
             if (user.EmailConfirmed)
             {
+                if (balance < 0)
+                {
+                    TempData["Message"] = "Please enter a non-negative amount.";
+                    return RedirectToAction(nameof(Index));
+                }
+
                 DateTime lastAccountCreationTimestamp = await _dbContext.GetLastCreatedBankAccountTimestampAsync(userId);
                 BankAccount newAccount = new BankAccount
                 {
-                    Balance = model.Balance,
+                    Balance = balance,
                     Holder = userId,
                     DateOpened = DateTime.Now,
                     AccountType = model.AccountType
@@ -277,7 +284,7 @@ namespace BankingAppCore.Controllers
 
                     if (timeRemaining > TimeSpan.Zero)
                     {
-                        TempData["Message"] = $"Please wait {timeRemaining.TotalSeconds} before creating a new account.";
+                        TempData["Message"] = $"Please wait {timeRemaining.TotalSeconds} seconds before creating a new account.";
                         return RedirectToAction(nameof(Index));
                     }
                 }
@@ -302,10 +309,11 @@ namespace BankingAppCore.Controllers
         {
             User user = await GetCurrentUserAsync(GetCurrentUserId());
             BankAccount account = await _dbContext.GetBankAccountFromPKeyAsync(accountID);
+            var fundsAmount = amount.GetValueOrDefault();
 
             if (user.EmailConfirmed)
             {
-                if (!amount.HasValue || amount <= 0)
+                if (fundsAmount <= 0)
                 {
                     TempData["Message"] = "Please enter a non-zero number amount.";
                 }
@@ -315,7 +323,7 @@ namespace BankingAppCore.Controllers
                     {
                         Sender = accountID,
                         Recipient = accountID,
-                        Amount = (decimal)amount,
+                        Amount = fundsAmount,
                         TransactionType = TransactionType.Deposit,
                         Description = "Added funds to the bank account",
                         TimeExecuted = DateTime.Now,
@@ -325,7 +333,7 @@ namespace BankingAppCore.Controllers
                     {
                         try
                         {
-                            account.Balance += (decimal)amount;
+                            account.Balance += fundsAmount;
                             _dbContext.TransactionRecords.Add(transaction);
 
                             await _dbContext.SaveChangesAsync();
@@ -413,7 +421,7 @@ namespace BankingAppCore.Controllers
 
                     if (timeRemaining > TimeSpan.Zero)
                     {
-                        TempData["Message"] = $"Please wait {timeRemaining.TotalSeconds} before creating a new card.";
+                        TempData["Message"] = $"Please wait {timeRemaining.TotalSeconds} seconds before creating a new card.";
                         return RedirectToAction(nameof(Index));
                     }
                 }
@@ -488,6 +496,7 @@ namespace BankingAppCore.Controllers
             User user = await GetCurrentUserAsync(GetCurrentUserId());
             BankAccount sourceAccount = await _dbContext.GetBankAccountFromPKeyAsync(model.SourceAccountId);
             BankAccount destinationAccount = await _dbContext.GetBankAccountFromPKeyAsync(model.DestinationAccountId);
+            var transferAmount = model.Amount.GetValueOrDefault();
 
             if (!ModelState.IsValid)
             {
@@ -497,6 +506,12 @@ namespace BankingAppCore.Controllers
 
             if (user.EmailConfirmed)
             {
+                if(transferAmount <= 0)
+                {
+                    TempData["Message"] = "Please enter a non-zero number amount.";
+                    return RedirectToAction(nameof(Index));
+                }
+
                 // Checking if both accounts exist and the source account has sufficient funds
                 if (sourceAccount == null || destinationAccount == null)
                 {
@@ -511,7 +526,7 @@ namespace BankingAppCore.Controllers
                     return RedirectToAction("Index");
                 }
 
-                if (sourceAccount.Balance < model.Amount)
+                if (sourceAccount.Balance < transferAmount)
                 {
                     // Handle the case where the source account does not have sufficient funds
                     TempData["Message"] = "Insufficient funds in the source account.";
@@ -519,14 +534,14 @@ namespace BankingAppCore.Controllers
                     return RedirectToAction("Index");
                 }
 
-                destinationAccount.Balance += model.Amount;
-                sourceAccount.Balance -= model.Amount;
+                destinationAccount.Balance += transferAmount;
+                sourceAccount.Balance -= transferAmount;
 
                 TransactionRecord transactionRecord = new TransactionRecord()
                 {
                     Sender = sourceAccount.AccountID,
                     Recipient = destinationAccount.AccountID,
-                    Amount = model.Amount,
+                    Amount = transferAmount,
                     TransactionType = TransactionType.Transfer,
                     Status = TransactionStatus.Approved,
                     Description = "Transfer from another bank account",
