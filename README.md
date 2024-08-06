@@ -132,10 +132,10 @@ In .NET Core, you can configure the connection to a LocalDB SQL Server using a l
 
 ### Installation
 
-1. Clone the repository:
+1. Clone the repository (you can check out to this branch if you want afterwards):
     ```
-    git clone https://github.com/JSlush95/BankingApp.git
-    cd BankingApp
+    git clone https://github.com/JSlush95/SlushBankingApp.git
+    cd BankingAppCore
     ```
 
 2. Restore .NET dependencies:
