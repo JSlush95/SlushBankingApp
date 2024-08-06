@@ -16,18 +16,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddEnvironmentVariables();
 
 var databaseConnection = Environment.GetEnvironmentVariable("CUSTOMCONNSTR_DBConnection") ?? throw new InvalidOperationException("Connection string base 'DBConnection' not found.");
-var certificatePath = Environment.GetEnvironmentVariable("ROOT_CERTIFICATE_PATH") ?? throw new InvalidOperationException("Certificate path not found.");
 
-// Combining with the web root path to get the absolute path
-var rootCertificateAbsolutePath = Path.Combine(builder.Environment.WebRootPath, certificatePath);
-
-// Validating the certificate path
-if (!File.Exists(rootCertificateAbsolutePath))
-{
-    throw new FileNotFoundException("Root certificate file not found.", rootCertificateAbsolutePath);
-}
-
-var connectionString = databaseConnection + "SSLMode=Require;Trust Server Certificate=false;Root Certificate=" + rootCertificateAbsolutePath + ";Include Error Detail=true;";
+var connectionString = databaseConnection + "SSLMode=Require;";
 
 // Binding the appsettings.json section to a POCO class
 builder.Services.Configure<AppSettings>(builder.Configuration.GetSection("AppSettings"));
