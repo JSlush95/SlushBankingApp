@@ -15,12 +15,18 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Configuration.AddEnvironmentVariables();
 
-var databaseConnection = Environment.GetEnvironmentVariable("CUSTOMCONNSTR_DBConnection") ?? throw new InvalidOperationException("Connection string base 'DBConnection' not found.");
+var databaseConnection = Environment.GetEnvironmentVariable("SlushBank_DBConnection") ?? throw new InvalidOperationException("Connection string base 'DBConnection' not found.");
 
-var connectionString = databaseConnection + "SSLMode=Require;";
+var connectionString = databaseConnection;
 
 // Binding the appsettings.json section to a POCO class
-builder.Services.Configure<AppSettings>(builder.Configuration.GetSection("AppSettings"));
+builder.Services.Configure<AppSettings>(options =>
+{
+    options.MailAccount = Environment.GetEnvironmentVariable("MailAccount");
+    options.MailPassword = Environment.GetEnvironmentVariable("MailPassword");
+    options.SmtpHost = Environment.GetEnvironmentVariable("SmtpHost");
+    options.PrivateKey = Environment.GetEnvironmentVariable("PrivateKey");
+});
 
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(connectionString));
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
